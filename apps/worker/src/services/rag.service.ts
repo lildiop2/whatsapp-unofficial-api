@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { OpenAIEmbeddings, ChatOpenAI } from '@langchain/openai';
 import { StateGraph, Annotation } from '@langchain/langgraph';
 import crypto from 'node:crypto';
 import pino from 'pino';
@@ -10,38 +11,114 @@ const logger = pino({
 });
 
 class RagService {
+  private provider: 'gemini' | 'openai' | 'ollama' = 'gemini';
   private genAI: GoogleGenerativeAI | null = null;
+  private openaiEmbeddings: OpenAIEmbeddings | null = null;
+  private openaiChat: ChatOpenAI | null = null;
   private isInitialized = false;
 
   constructor() {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      logger.warn(
-        '⚠️ GEMINI_API_KEY não configurada. O serviço de IA/RAG estará desativado ou operando de forma limitada.',
+    const rawProvider = process.env.AI_PROVIDER || 'gemini';
+
+    if (rawProvider === 'gemini') {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        logger.warn('⚠️ GEMINI_API_KEY não configurada. Serviço RAG com Gemini inativo.');
+        return;
+      }
+      this.provider = 'gemini';
+      this.genAI = new GoogleGenerativeAI(apiKey);
+      this.isInitialized = true;
+      logger.info('Serviço RAG inicializado com provedor Google Gemini.');
+    } else if (rawProvider === 'openai') {
+      const apiKey = process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        logger.warn(
+          '⚠️ AI_API_KEY ou OPENAI_API_KEY não configurada. Serviço RAG com OpenAI inativo.',
+        );
+        return;
+      }
+      this.provider = 'openai';
+
+      const embeddingModel = process.env.AI_EMBEDDING_MODEL || 'text-embedding-3-small';
+      const isText3 = embeddingModel.includes('text-embedding-3');
+
+      this.openaiEmbeddings = new OpenAIEmbeddings({
+        openAIApiKey: apiKey,
+        configuration: {
+          baseURL: process.env.AI_BASE_URL,
+        },
+        modelName: embeddingModel,
+        // Reduz dimensões se usar text-embedding-3 de forma nativa para caber no vector(768) do pgvector
+        dimensions: isText3 ? 768 : undefined,
+      });
+
+      this.openaiChat = new ChatOpenAI({
+        openAIApiKey: apiKey,
+        configuration: {
+          baseURL: process.env.AI_BASE_URL,
+        },
+        modelName: process.env.AI_CHAT_MODEL || 'gpt-4o-mini',
+        temperature: 0.3,
+      });
+
+      this.isInitialized = true;
+      logger.info(
+        `Serviço RAG inicializado com provedor OpenAI compatível (Modelos: ${(this.openaiChat as any).modelName} / ${this.openaiEmbeddings.modelName}).`,
       );
-      return;
+    } else if (rawProvider === 'ollama') {
+      this.provider = 'ollama';
+      const baseURL = process.env.AI_BASE_URL || 'http://localhost:11434/v1';
+
+      this.openaiEmbeddings = new OpenAIEmbeddings({
+        openAIApiKey: 'ollama', // Ollama não exige chave, mas biblioteca requer valor não-vazio
+        configuration: {
+          baseURL,
+        },
+        modelName: process.env.AI_EMBEDDING_MODEL || 'nomic-embed-text',
+      });
+
+      this.openaiChat = new ChatOpenAI({
+        openAIApiKey: 'ollama',
+        configuration: {
+          baseURL,
+        },
+        modelName: process.env.AI_CHAT_MODEL || 'llama3',
+        temperature: 0.3,
+      });
+
+      this.isInitialized = true;
+      logger.info(
+        `Serviço RAG inicializado com provedor Ollama (URL: ${baseURL}, Modelos: ${(this.openaiChat as any).modelName} / ${this.openaiEmbeddings.modelName}).`,
+      );
+    } else {
+      logger.error(`Provedor de IA desconhecido: ${rawProvider}`);
     }
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.isInitialized = true;
   }
 
   /**
-   * Gera vetores de embedding usando o modelo text-embedding-005 do Gemini.
+   * Gera vetores de embedding usando o provedor configurado (Gemini / OpenAI / Ollama).
    */
   async generateEmbedding(text: string): Promise<number[]> {
-    if (!this.isInitialized || !this.genAI) {
-      throw new Error('Serviço RAG não inicializado (GEMINI_API_KEY ausente).');
+    if (!this.isInitialized) {
+      throw new Error('Serviço RAG não inicializado (Chaves de API ou configuração ausente).');
     }
 
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'text-embedding-005' });
-      const result = await model.embedContent(text);
-      if (!result.embedding?.values) {
-        throw new Error('Retorno de embedding vazio do modelo Gemini.');
+      if (this.provider === 'gemini' && this.genAI) {
+        const modelName = process.env.AI_EMBEDDING_MODEL || 'text-embedding-005';
+        const model = this.genAI.getGenerativeModel({ model: modelName });
+        const result = await model.embedContent(text);
+        if (!result.embedding?.values) {
+          throw new Error('Retorno de embedding vazio do modelo Gemini.');
+        }
+        return result.embedding.values;
+      } else if (this.openaiEmbeddings) {
+        return await this.openaiEmbeddings.embedQuery(text);
       }
-      return result.embedding.values;
+      throw new Error('Provedor de embedding inválido ou não inicializado.');
     } catch (err) {
-      logger.error(err, 'Erro ao gerar embedding com Gemini');
+      logger.error(err, `Erro ao gerar embedding no provedor ${this.provider}`);
       throw err;
     }
   }
@@ -62,7 +139,6 @@ class RagService {
       const embeddingStr = `[${embedding.join(',')}]`;
       const id = crypto.randomUUID();
 
-      // Inserção SQL Injection segura usando parâmetros
       await prisma.$executeRawUnsafe(
         `
         INSERT INTO "MessageEmbedding" (id, "sessionId", "messageId", sender, content, embedding)
@@ -127,8 +203,8 @@ class RagService {
    * Executa a IA com Langgraph baseado no histórico semântico recuperado (RAG).
    */
   async runAgent(sessionId: string, incomingMessage: string): Promise<string> {
-    if (!this.isInitialized || !this.genAI) {
-      return 'IA temporariamente indisponível (chave ausente).';
+    if (!this.isInitialized) {
+      return 'IA temporariamente indisponível (provedor não inicializado).';
     }
 
     try {
@@ -149,8 +225,6 @@ class RagService {
 
       // 3. Nó de Geração da Resposta (Generation)
       const generateNode = async (state: typeof AgentState.State) => {
-        const model = this.genAI!.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
         const prompt = `
 Você é um atendente inteligente e prestativo de suporte automatizado no WhatsApp.
 O usuário enviou a mensagem: "${state.incomingMessage}".
@@ -167,8 +241,21 @@ Instruções:
 Resposta do Assistente:
 `;
 
-        const responseResult = await model.generateContent(prompt);
-        const replyText = responseResult.response.text()?.trim() || '';
+        let replyText = '';
+
+        if (this.provider === 'gemini' && this.genAI) {
+          const modelName = process.env.AI_CHAT_MODEL || 'gemini-1.5-flash';
+          const model = this.genAI.getGenerativeModel({ model: modelName });
+          const responseResult = await model.generateContent(prompt);
+          replyText = responseResult.response.text()?.trim() || '';
+        } else if (this.openaiChat) {
+          const response = await this.openaiChat.invoke(prompt);
+          replyText = (
+            typeof response.content === 'string'
+              ? response.content
+              : JSON.stringify(response.content)
+          ).trim();
+        }
 
         return { reply: replyText };
       };

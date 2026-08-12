@@ -8,6 +8,11 @@ export const envSchema = z.object({
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error']).default('info'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   GEMINI_API_KEY: z.string().optional(),
+  AI_PROVIDER: z.enum(['gemini', 'openai', 'ollama']).default('gemini'),
+  AI_API_KEY: z.string().optional(),
+  AI_BASE_URL: z.string().optional(),
+  AI_CHAT_MODEL: z.string().optional(),
+  AI_EMBEDDING_MODEL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
