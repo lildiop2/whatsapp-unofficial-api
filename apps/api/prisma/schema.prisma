@@ -1,11 +1,13 @@
 // apps/api/prisma/schema.prisma
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [vector]
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 enum SessionStatus {
@@ -24,14 +26,15 @@ model User {
 }
 
 model WhatsappSession {
-  id          String        @id @default(uuid()) // sessionId correspondente no Zapo
+  id          String             @id @default(uuid()) // sessionId correspondente no Zapo
   name        String
-  status      SessionStatus @default(DISCONNECTED)
+  status      SessionStatus      @default(DISCONNECTED)
   webhookUrl  String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
   webhookLogs WebhookLog[]
   messages    SentMessage[]
+  embeddings  MessageEmbedding[]
 }
 
 model WebhookLog {
@@ -54,4 +57,15 @@ model SentMessage {
   messageId String // ID gerado pelo Zapo/WhatsApp
   status    String // ex: "pending", "sent", "delivered", "read", "failed"
   createdAt DateTime        @default(now())
+}
+
+model MessageEmbedding {
+  id        String                      @id @default(uuid())
+  sessionId String
+  session   WhatsappSession             @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  messageId String                      @unique // Referência do ID da mensagem no WhatsApp
+  sender    String // Quem enviou (JID)
+  content   String // Texto da mensagem
+  embedding Unsupported("vector(768)")? // 768 dimensões para Gemini text-embedding-004
+  createdAt DateTime                    @default(now())
 }

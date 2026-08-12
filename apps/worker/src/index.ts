@@ -1,8 +1,20 @@
 import amqp from 'amqplib';
 import dotenv from 'dotenv';
 import pino from 'pino';
+import crypto from 'node:crypto';
 import { validateEnv } from '@zap/shared';
 import { PrismaClient } from '@prisma/client';
+import { ragService } from './services/rag.service.js';
+
+function extractMessageText(payload: any): string | null {
+  if (!payload || !payload.message) return null;
+  const msg = payload.message;
+  if (msg.conversation) return msg.conversation;
+  if (msg.extendedTextMessage?.text) return msg.extendedTextMessage.text;
+  if (msg.imageMessage?.caption) return msg.imageMessage.caption;
+  if (msg.videoMessage?.caption) return msg.videoMessage.caption;
+  return null;
+}
 
 dotenv.config();
 
@@ -71,6 +83,50 @@ async function main() {
     logger.debug(
       `Processando webhook [${event}] para sessão ${sessionId}. Tentativa: ${attempts + 1}`,
     );
+
+    // Processamento de RAG e Auto-Reply em background (não bloqueante para o webhook)
+    if (event === 'message' && payload) {
+      const textContent = extractMessageText(payload);
+      if (textContent) {
+        const senderJid = payload.key?.fromMe ? 'me' : payload.key?.remoteJid || 'unknown';
+        const messageId = payload.key?.id || crypto.randomUUID();
+
+        // 1. Indexar mensagem no pgvector
+        ragService.saveMessageEmbedding(sessionId, messageId, senderJid, textContent).catch(err => {
+          logger.error(err, 'Erro ao salvar embedding da mensagem no pgvector');
+        });
+
+        // 2. Auto-reply com RAG se a mensagem for recebida e a IA estiver ativada
+        if (!payload.key?.fromMe && process.env.GEMINI_API_KEY) {
+          ragService
+            .runAgent(sessionId, textContent)
+            .then(async aiReply => {
+              logger.info(`Agente RAG gerou resposta: "${aiReply}"`);
+              const apiPort = process.env.PORT || 3000;
+              const sendResponse = await fetch(`http://localhost:${apiPort}/messages/send`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  sessionId,
+                  to: payload.key.remoteJid,
+                  text: aiReply,
+                  presenceDelay: 2000,
+                  presenceType: 'composing',
+                }),
+              });
+
+              if (!sendResponse.ok) {
+                logger.error(`Falha ao enviar auto-reply. Status: ${sendResponse.status}`);
+              }
+            })
+            .catch(err => {
+              logger.error(err, 'Erro ao processar auto-reply com Langgraph RAG');
+            });
+        }
+      }
+    }
 
     try {
       // 2. Buscar o webhookUrl atualizado da sessão no banco de dados

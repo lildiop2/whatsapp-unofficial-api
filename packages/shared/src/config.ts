@@ -7,6 +7,7 @@ export const envSchema = z.object({
   PORT: z.preprocess(val => Number(val), z.number().default(3000)),
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error']).default('info'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  GEMINI_API_KEY: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
