@@ -16,9 +16,12 @@ import messageRoutes from './routes/message.routes.js';
 import { zapoSessionManager } from './services/zapo.service.js';
 import { queueService } from './services/queue.service.js';
 
+import cors from 'cors';
+
 const app = express();
 const port = env.PORT;
 
+app.use(cors());
 app.use(express.json());
 
 // Rotas da API
