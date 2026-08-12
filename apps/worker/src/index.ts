@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 import pino from 'pino';
 import crypto from 'node:crypto';
 import { validateEnv } from '@zap/shared';
-import { PrismaClient } from '@prisma/client';
 import { ragService } from './services/rag.service.js';
+import { prisma } from './services/prisma.service.js';
 
 function extractMessageText(payload: any): string | null {
   if (!payload || !payload.message) return null;
@@ -24,8 +24,6 @@ const logger = pino({
   level: env.LOG_LEVEL,
   transport: env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
 });
-
-const prisma = new PrismaClient();
 
 const queueName = 'zap-webhooks';
 const dlxExchange = 'zap-webhooks-dlx';
