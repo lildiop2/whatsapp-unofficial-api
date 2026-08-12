@@ -9,6 +9,7 @@ import pino from 'pino';
 import pRetry from 'p-retry';
 import { prisma } from './prisma.service.js';
 import { SessionStatus } from '@zap/shared';
+import { queueService } from './queue.service.js';
 
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
@@ -155,6 +156,9 @@ class ZapoSessionManager {
         logger.info(`Conexão aberta com sucesso para a sessão ${sessionId}`);
         this.sessionQrs.delete(sessionId);
         await this.updateSessionStatus(sessionId, 'CONNECTED');
+        queueService
+          .publishWebhook(sessionId, 'connection', { status: 'CONNECTED' })
+          .catch(() => {});
       } else if (event.status === 'close') {
         logger.warn(
           `Conexão fechada para a sessão ${sessionId}. Motivo: ${event.reason}, Logout: ${event.isLogout}`,
@@ -165,11 +169,25 @@ class ZapoSessionManager {
           this.sessionQrs.delete(sessionId);
           this.clients.delete(sessionId);
           await this.updateSessionStatus(sessionId, 'DISCONNECTED');
+          queueService
+            .publishWebhook(sessionId, 'connection', { status: 'DISCONNECTED', isLogout: true })
+            .catch(() => {});
         } else {
           // Desconexão temporária: o loop de retry cuidará disso
           await this.updateSessionStatus(sessionId, 'CONNECTING');
+          queueService
+            .publishWebhook(sessionId, 'connection', { status: 'CONNECTING' })
+            .catch(() => {});
         }
       }
+    });
+
+    // Escutar por novas mensagens recebidas
+    client.on('message', async event => {
+      logger.debug(`Nova mensagem recebida na sessão ${sessionId} de ${event.key.remoteJid}`);
+      queueService.publishWebhook(sessionId, 'message', event).catch(err => {
+        logger.error(err, `Falha ao enfileirar mensagem recebida na sessão ${sessionId}`);
+      });
     });
   }
 

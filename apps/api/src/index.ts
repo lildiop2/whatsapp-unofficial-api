@@ -14,6 +14,7 @@ const logger = pino({
 import sessionRoutes from './routes/session.routes.js';
 import messageRoutes from './routes/message.routes.js';
 import { zapoSessionManager } from './services/zapo.service.js';
+import { queueService } from './services/queue.service.js';
 
 const app = express();
 const port = env.PORT;
@@ -34,10 +35,19 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Inicializar sessões ativas do banco de dados no boot
-zapoSessionManager.bootstrapSessions().then(() => {
-  logger.info('Bootstrap das sessões concluído.');
-});
+// Conectar ao RabbitMQ e inicializar filas
+queueService
+  .connect()
+  .then(() => {
+    // Inicializar sessões ativas do banco de dados no boot
+    return zapoSessionManager.bootstrapSessions();
+  })
+  .then(() => {
+    logger.info('Bootstrap das sessões concluído.');
+  })
+  .catch(err => {
+    logger.error(err, 'Falha durante a inicialização dos serviços em segundo plano.');
+  });
 
 const server = app.listen(port, () => {
   logger.info(`Server is running at http://localhost:${port}`);
@@ -48,6 +58,7 @@ const handleShutdown = async (signal: string) => {
   logger.info(`Sinal de ${signal} recebido. Desligando graciosamente...`);
   server.close(async () => {
     await zapoSessionManager.shutdown();
+    await queueService.close();
     logger.info('Desligamento do servidor finalizado.');
     process.exit(0);
   });
