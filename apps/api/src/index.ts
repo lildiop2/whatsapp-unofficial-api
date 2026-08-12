@@ -11,10 +11,18 @@ const logger = pino({
   transport: env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
 });
 
+import sessionRoutes from './routes/session.routes.js';
+import messageRoutes from './routes/message.routes.js';
+import { zapoSessionManager } from './services/zapo.service.js';
+
 const app = express();
 const port = env.PORT;
 
 app.use(express.json());
+
+// Rotas da API
+app.use('/sessions', sessionRoutes);
+app.use('/messages', messageRoutes);
 
 app.get('/health', (req, res) => {
   const status: SessionStatus = 'DISCONNECTED';
@@ -26,6 +34,24 @@ app.get('/health', (req, res) => {
   });
 });
 
-app.listen(port, () => {
+// Inicializar sessões ativas do banco de dados no boot
+zapoSessionManager.bootstrapSessions().then(() => {
+  logger.info('Bootstrap das sessões concluído.');
+});
+
+const server = app.listen(port, () => {
   logger.info(`Server is running at http://localhost:${port}`);
 });
+
+// Manipulação de desligamento gracioso
+const handleShutdown = async (signal: string) => {
+  logger.info(`Sinal de ${signal} recebido. Desligando graciosamente...`);
+  server.close(async () => {
+    await zapoSessionManager.shutdown();
+    logger.info('Desligamento do servidor finalizado.');
+    process.exit(0);
+  });
+};
+
+process.on('SIGINT', () => handleShutdown('SIGINT'));
+process.on('SIGTERM', () => handleShutdown('SIGTERM'));
