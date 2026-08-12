@@ -2,10 +2,13 @@ import dotenv from 'dotenv';
 import pino from 'pino';
 
 dotenv.config();
+import { validateEnv } from '@zap/shared';
+
+const env = validateEnv(process.env);
 
 const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
-  transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
+  level: env.LOG_LEVEL,
+  transport: env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
 });
 
 async function main() {

@@ -1,17 +1,18 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import pino from 'pino';
-import { SessionStatus } from '@zap/shared';
-
 dotenv.config();
+import { validateEnv, SessionStatus } from '@zap/shared';
+
+const env = validateEnv(process.env);
 
 const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
-  transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
+  level: env.LOG_LEVEL,
+  transport: env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
 });
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = env.PORT;
 
 app.use(express.json());
 

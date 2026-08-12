@@ -22,3 +22,5 @@ export interface SendMessageResponse {
   messageId?: string;
   error?: string;
 }
+
+export * from './config.js';
