@@ -1,7 +1,6 @@
+import './load-env.js';
 import express from 'express';
-import dotenv from 'dotenv';
 import pino from 'pino';
-dotenv.config();
 import { validateEnv, SessionStatus } from '@zap/shared';
 
 const env = validateEnv(process.env);

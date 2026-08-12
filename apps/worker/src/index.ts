@@ -1,5 +1,5 @@
+import './load-env.js';
 import amqp from 'amqplib';
-import dotenv from 'dotenv';
 import pino from 'pino';
 import crypto from 'node:crypto';
 import { validateEnv } from '@zap/shared';
@@ -15,8 +15,6 @@ function extractMessageText(payload: any): string | null {
   if (msg.videoMessage?.caption) return msg.videoMessage.caption;
   return null;
 }
-
-dotenv.config();
 
 const env = validateEnv(process.env);
 
