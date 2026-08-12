@@ -1,0 +1,57 @@
+// apps/api/prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum SessionStatus {
+  DISCONNECTED
+  PAIRING_REQUIRED
+  CONNECTING
+  CONNECTED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WhatsappSession {
+  id          String        @id @default(uuid()) // sessionId correspondente no Zapo
+  name        String
+  status      SessionStatus @default(DISCONNECTED)
+  webhookUrl  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  webhookLogs WebhookLog[]
+  messages    SentMessage[]
+}
+
+model WebhookLog {
+  id         String          @id @default(uuid())
+  sessionId  String
+  session    WhatsappSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  event      String // ex: "message", "connection"
+  payload    Json
+  statusCode Int?
+  success    Boolean
+  createdAt  DateTime        @default(now())
+}
+
+model SentMessage {
+  id        String          @id @default(uuid())
+  sessionId String
+  session   WhatsappSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  recipient String
+  content   String
+  messageId String // ID gerado pelo Zapo/WhatsApp
+  status    String // ex: "pending", "sent", "delivered", "read", "failed"
+  createdAt DateTime        @default(now())
+}
