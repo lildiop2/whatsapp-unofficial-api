@@ -20,11 +20,11 @@ export const prisma = basePrisma.$extends({
 
           if (tenantId) {
             const anyArgs = args as any;
-            anyArgs.where = anyArgs.where || {};
 
             // Para queries de findUnique, reescrevemos sob o capô como findFirst
             // de modo que o Prisma nos permita filtrar por tenantId (que não é campo único no schema)
             if (operation === 'findUnique') {
+              anyArgs.where = anyArgs.where || {};
               anyArgs.where.tenantId = tenantId;
               return (basePrisma as any)[model.charAt(0).toLowerCase() + model.slice(1)].findFirst(
                 anyArgs,
@@ -45,6 +45,7 @@ export const prisma = basePrisma.$extends({
                 'groupBy',
               ].includes(operation)
             ) {
+              anyArgs.where = anyArgs.where || {};
               anyArgs.where.tenantId = tenantId;
             }
 

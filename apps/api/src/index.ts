@@ -21,7 +21,29 @@ import cors from 'cors';
 const app = express();
 const port = env.PORT;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      return callback(null, true);
+      // if (!origin) {
+      //   return callback(null, true);
+      // }
+      // const requestOrigin = normalizeOrigin(origin);
+      // if (allowedOrigins.has(requestOrigin)) {
+      //   return callback(null, true);
+      // }
+      // logger.error(
+      //   `CORS blocked request: origin=${origin} requestOrigin=${requestOrigin} allowedOrigins=${Array.from(
+      //     allowedOrigins,
+      //   ).join(', ')}`,
+      // );
+      // return callback(new Error('Not allowed by CORS'));
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 // Rotas da API

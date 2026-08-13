@@ -41,6 +41,7 @@ export const createSession = async (req: TenantRequest, res: Response) => {
 
     return res.status(201).json(session);
   } catch (err: any) {
+    console.error(`Erro ao criar sessão ${sessionId}:`, err);
     return res.status(500).json({ error: err.message });
   }
 };

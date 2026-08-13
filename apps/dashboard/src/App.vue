@@ -11,8 +11,8 @@ interface Session {
   isConnected?: boolean;
 }
 
-// Configuração da URL da API (lendo da porta padrão 3000)
-const API_BASE = 'http://localhost:3000';
+// Configuração da URL da API (lendo da porta padrão 3002)
+const API_BASE = 'http://localhost:3002';
 
 const sessions = ref<Session[]>([]);
 const selectedSessionId = ref<string | null>(null);
