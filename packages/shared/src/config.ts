@@ -4,7 +4,7 @@ export const envSchema = z.object({
   DATABASE_URL: z.string().url('DATABASE_URL deve ser uma URL válida'),
   REDIS_URL: z.string().url('REDIS_URL deve ser uma URL válida'),
   RABBITMQ_URL: z.string().url('RABBITMQ_URL deve ser uma URL válida'),
-  PORT: z.preprocess(val => Number(val), z.number().default(3000)),
+  PORT: z.preprocess(val => Number(val), z.number().default(3002)),
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error']).default('info'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   GEMINI_API_KEY: z.string().optional(),

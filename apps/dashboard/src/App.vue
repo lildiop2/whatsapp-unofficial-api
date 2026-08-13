@@ -121,8 +121,8 @@ const confirmModal = ref({
   confirmText: 'Confirmar',
   cancelText: 'Cancelar',
   isDanger: false,
-  onConfirm: () => {},
-  onCancel: () => {},
+  onConfirm: () => { },
+  onCancel: () => { },
 });
 
 const alertModal = ref({
@@ -130,7 +130,7 @@ const alertModal = ref({
   title: '',
   message: '',
   buttonText: 'Ok',
-  onClose: () => {},
+  onClose: () => { },
 });
 
 let pollInterval: ReturnType<typeof setInterval> | null = null;
@@ -611,7 +611,7 @@ const initApp = async () => {
     if (selectedSessionId.value) {
       await fetchSessionStatus(selectedSessionId.value);
     }
-  }, 3000);
+  }, 3002);
 };
 
 // Monitorar alterações de abas para carregar dados dinamicamente
@@ -659,24 +659,11 @@ onUnmounted(() => {
   <div v-if="!token" class="auth-wrapper">
     <div class="auth-card">
       <div class="auth-header-logo">
-        <svg
-          width="40"
-          height="40"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M8.625 9.75a.625.625 0 11-1.25 0 .625.625 0 011.25 0zm4.875 0a.625.625 0 11-1.25 0 .625.625 0 011.25 0zm4.875 0a.625.625 0 11-1.25 0 .625.625 0 011.25 0z"
-          />
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12z"
-          />
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M8.625 9.75a.625.625 0 11-1.25 0 .625.625 0 011.25 0zm4.875 0a.625.625 0 11-1.25 0 .625.625 0 011.25 0zm4.875 0a.625.625 0 11-1.25 0 .625.625 0 011.25 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12z" />
         </svg>
         <h2>Zap-Zap SaaS Platform</h2>
         <p>Acesse o painel do seu tenant para controlar conexões e inteligência artificial.</p>
@@ -690,25 +677,13 @@ onUnmounted(() => {
       <form v-if="authMode === 'login'" @submit.prevent="handleLogin">
         <div class="form-group">
           <label class="form-label" for="login-email">E-mail</label>
-          <input
-            id="login-email"
-            v-model="authForm.email"
-            type="email"
-            class="form-input"
-            placeholder="seuemail@provedor.com"
-            required
-          />
+          <input id="login-email" v-model="authForm.email" type="email" class="form-input"
+            placeholder="seuemail@provedor.com" required />
         </div>
         <div class="form-group">
           <label class="form-label" for="login-password">Senha</label>
-          <input
-            id="login-password"
-            v-model="authForm.password"
-            type="password"
-            class="form-input"
-            placeholder="••••••••"
-            required
-          />
+          <input id="login-password" v-model="authForm.password" type="password" class="form-input"
+            placeholder="••••••••" required />
         </div>
         <button type="submit" class="btn btn-primary" :disabled="authLoading">
           {{ authLoading ? 'Autenticando...' : 'Entrar no Painel' }}
@@ -723,47 +698,23 @@ onUnmounted(() => {
       <form v-else @submit.prevent="handleRegister">
         <div class="form-group">
           <label class="form-label" for="register-name">Seu Nome</label>
-          <input
-            id="register-name"
-            v-model="authForm.name"
-            type="text"
-            class="form-input"
-            placeholder="Nome Completo"
-            required
-          />
+          <input id="register-name" v-model="authForm.name" type="text" class="form-input" placeholder="Nome Completo"
+            required />
         </div>
         <div class="form-group">
           <label class="form-label" for="register-email">E-mail Corporativo</label>
-          <input
-            id="register-email"
-            v-model="authForm.email"
-            type="email"
-            class="form-input"
-            placeholder="email@suaempresa.com"
-            required
-          />
+          <input id="register-email" v-model="authForm.email" type="email" class="form-input"
+            placeholder="email@suaempresa.com" required />
         </div>
         <div class="form-group">
           <label class="form-label" for="register-tenant">Nome da Organização (SaaS Tenant)</label>
-          <input
-            id="register-tenant"
-            v-model="authForm.tenantName"
-            type="text"
-            class="form-input"
-            placeholder="Ex: Minha Empresa Ltda"
-            required
-          />
+          <input id="register-tenant" v-model="authForm.tenantName" type="text" class="form-input"
+            placeholder="Ex: Minha Empresa Ltda" required />
         </div>
         <div class="form-group">
           <label class="form-label" for="register-password">Senha de Acesso</label>
-          <input
-            id="register-password"
-            v-model="authForm.password"
-            type="password"
-            class="form-input"
-            placeholder="Mínimo 6 caracteres"
-            required
-          />
+          <input id="register-password" v-model="authForm.password" type="password" class="form-input"
+            placeholder="Mínimo 6 caracteres" required />
         </div>
         <button type="submit" class="btn btn-primary" :disabled="authLoading">
           {{ authLoading ? 'Registrando...' : 'Registrar Organização' }}
@@ -800,114 +751,42 @@ onUnmounted(() => {
         <div class="card sidebar-nav">
           <h2 class="card-title">Menu Principal</h2>
           <div class="nav-links">
-            <a
-              href="#"
-              class="nav-link"
-              :class="{ active: activeTab === 'sessions' }"
-              @click.prevent="activeTab = 'sessions'"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48L4.5 19.5l2.67-.89A9.37 9.37 0 0012 20.25z"
-                />
+            <a href="#" class="nav-link" :class="{ active: activeTab === 'sessions' }"
+              @click.prevent="activeTab = 'sessions'">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48L4.5 19.5l2.67-.89A9.37 9.37 0 0012 20.25z" />
               </svg>
               Instâncias WhatsApp
             </a>
-            <a
-              href="#"
-              class="nav-link"
-              :class="{ active: activeTab === 'ai' }"
-              @click.prevent="activeTab = 'ai'"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M9.813 15.904L9 21m0-5.096c-2.924-.766-5-3.232-5-6.154a6.223 6.223 0 0110.454-4.5M9 15.904a6.208 6.208 0 006.183-4.096m0 0a6.223 6.223 0 00-6.183-5.808m6.183 9.904L15 21"
-                />
+            <a href="#" class="nav-link" :class="{ active: activeTab === 'ai' }" @click.prevent="activeTab = 'ai'">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M9.813 15.904L9 21m0-5.096c-2.924-.766-5-3.232-5-6.154a6.223 6.223 0 0110.454-4.5M9 15.904a6.208 6.208 0 006.183-4.096m0 0a6.223 6.223 0 00-6.183-5.808m6.183 9.904L15 21" />
               </svg>
               Configurações de IA
             </a>
-            <a
-              href="#"
-              class="nav-link"
-              :class="{ active: activeTab === 'keys' }"
-              @click.prevent="activeTab = 'keys'"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M15.75 5.25a3 3 0 013 3m3 0a3 3 0 01-3 3m-3-3a3 3 0 00-3-3m-12 11.25V18m0 0h11.25m-11.25 0h-.75m.75 0v3h3v-3m2.25 0h.75m.75 0v-3.75"
-                />
+            <a href="#" class="nav-link" :class="{ active: activeTab === 'keys' }" @click.prevent="activeTab = 'keys'">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M15.75 5.25a3 3 0 013 3m3 0a3 3 0 01-3 3m-3-3a3 3 0 00-3-3m-12 11.25V18m0 0h11.25m-11.25 0h-.75m.75 0v3h3v-3m2.25 0h.75m.75 0v-3.75" />
               </svg>
               Chaves de API
             </a>
-            <a
-              href="#"
-              class="nav-link"
-              :class="{ active: activeTab === 'logs' }"
-              @click.prevent="activeTab = 'logs'"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
-                />
+            <a href="#" class="nav-link" :class="{ active: activeTab === 'logs' }" @click.prevent="activeTab = 'logs'">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
               </svg>
               Auditoria e Logs
             </a>
           </div>
           <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 1.5rem 0" />
-          <button
-            class="btn btn-danger"
-            style="display: flex; align-items: center; justify-content: center; gap: 0.5rem"
-            @click="handleLogout"
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
-              />
+          <button class="btn btn-danger"
+            style="display: flex; align-items: center; justify-content: center; gap: 0.5rem" @click="handleLogout">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
             </svg>
             Sair da Conta
           </button>
@@ -926,34 +805,18 @@ onUnmounted(() => {
               <form @submit.prevent="handleCreateSession">
                 <div class="form-group">
                   <label class="form-label" for="session-name">Nome da Instância</label>
-                  <input
-                    id="session-name"
-                    v-model="newSession.name"
-                    type="text"
-                    class="form-input"
-                    placeholder="Ex: Suporte de TI"
-                    required
-                  />
+                  <input id="session-name" v-model="newSession.name" type="text" class="form-input"
+                    placeholder="Ex: Suporte de TI" required />
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="session-id">ID Customizado (Opcional)</label>
-                  <input
-                    id="session-id"
-                    v-model="newSession.id"
-                    type="text"
-                    class="form-input"
-                    placeholder="Auto-gerado se vazio"
-                  />
+                  <input id="session-id" v-model="newSession.id" type="text" class="form-input"
+                    placeholder="Auto-gerado se vazio" />
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="session-webhook">Webhook URL (Opcional)</label>
-                  <input
-                    id="session-webhook"
-                    v-model="newSession.webhookUrl"
-                    type="url"
-                    class="form-input"
-                    placeholder="https://exemplo.com/callback"
-                  />
+                  <input id="session-webhook" v-model="newSession.webhookUrl" type="url" class="form-input"
+                    placeholder="https://exemplo.com/callback" />
                 </div>
                 <button type="submit" class="btn btn-primary" :disabled="creatingSession">
                   {{ creatingSession ? 'Criando...' : 'Criar Instância' }}
@@ -964,38 +827,27 @@ onUnmounted(() => {
             <!-- Lista de Conexões -->
             <div class="card">
               <h2 class="card-title">Instâncias WhatsApp</h2>
-              <div
-                v-if="sessions.length === 0"
-                style="
+              <div v-if="sessions.length === 0" style="
                   color: var(--text-muted);
                   font-size: 0.85rem;
                   text-align: center;
                   padding: 1rem 0;
-                "
-              >
+                ">
                 Nenhuma instância cadastrada.
               </div>
               <div v-else class="sessions-list">
-                <div
-                  v-for="session in sessions"
-                  :key="session.id"
-                  class="session-item"
-                  :class="{ active: selectedSessionId === session.id }"
-                  @click="selectSession(session.id)"
-                >
+                <div v-for="session in sessions" :key="session.id" class="session-item"
+                  :class="{ active: selectedSessionId === session.id }" @click="selectSession(session.id)">
                   <div class="session-item-info">
                     <h3>{{ session.name }}</h3>
                     <p>{{ session.id.slice(0, 8) }}...</p>
                   </div>
-                  <span
-                    class="badge"
-                    :class="{
-                      'badge-connected': session.status === 'CONNECTED',
-                      'badge-pairing': session.status === 'PAIRING_REQUIRED',
-                      'badge-connecting': session.status === 'CONNECTING',
-                      'badge-disconnected': session.status === 'DISCONNECTED',
-                    }"
-                  >
+                  <span class="badge" :class="{
+                    'badge-connected': session.status === 'CONNECTED',
+                    'badge-pairing': session.status === 'PAIRING_REQUIRED',
+                    'badge-connecting': session.status === 'CONNECTING',
+                    'badge-disconnected': session.status === 'DISCONNECTED',
+                  }">
                     {{ getStatusLabel(session.status) }}
                   </span>
                 </div>
@@ -1006,19 +858,9 @@ onUnmounted(() => {
           <!-- Coluna Direita: Detalhes -->
           <div class="detail-pane">
             <div v-if="!selectedSession" class="detail-view-empty">
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48L4.5 19.5l2.67-.89A9.37 9.37 0 0012 20.25z"
-                />
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48L4.5 19.5l2.67-.89A9.37 9.37 0 0012 20.25z" />
               </svg>
               <h3>Nenhuma instância selecionada</h3>
               <p>
@@ -1031,27 +873,21 @@ onUnmounted(() => {
               <div class="session-detail-header">
                 <div>
                   <h2>{{ selectedSession.name }}</h2>
-                  <p
-                    style="
+                  <p style="
                       font-family: var(--font-mono);
                       font-size: 0.8rem;
                       color: var(--text-muted);
                       margin-top: 0.25rem;
-                    "
-                  >
+                    ">
                     ID: {{ selectedSession.id }}
                   </p>
                 </div>
-                <span
-                  class="badge"
-                  :class="{
-                    'badge-connected': selectedSession.status === 'CONNECTED',
-                    'badge-pairing': selectedSession.status === 'PAIRING_REQUIRED',
-                    'badge-connecting': selectedSession.status === 'CONNECTING',
-                    'badge-disconnected': selectedSession.status === 'DISCONNECTED',
-                  }"
-                  style="padding: 0.4rem 0.8rem; font-size: 0.85rem"
-                >
+                <span class="badge" :class="{
+                  'badge-connected': selectedSession.status === 'CONNECTED',
+                  'badge-pairing': selectedSession.status === 'PAIRING_REQUIRED',
+                  'badge-connecting': selectedSession.status === 'CONNECTING',
+                  'badge-disconnected': selectedSession.status === 'DISCONNECTED',
+                }" style="padding: 0.4rem 0.8rem; font-size: 0.85rem">
                   {{ getStatusLabel(selectedSession.status) }}
                 </span>
               </div>
@@ -1083,9 +919,7 @@ onUnmounted(() => {
               </div>
 
               <!-- Conectado -->
-              <div
-                v-if="selectedSession.status === 'CONNECTED'"
-                style="
+              <div v-if="selectedSession.status === 'CONNECTED'" style="
                   margin-bottom: 2rem;
                   background-color: hsla(142, 70%, 45%, 0.05);
                   border: 1px solid hsla(142, 70%, 45%, 0.2);
@@ -1094,16 +928,13 @@ onUnmounted(() => {
                   display: flex;
                   align-items: center;
                   gap: 1rem;
-                "
-              >
-                <div
-                  style="
+                ">
+                <div style="
                     background-color: var(--status-connected);
                     width: 12px;
                     height: 12px;
                     border-radius: 50%;
-                  "
-                ></div>
+                  "></div>
                 <div>
                   <h3 style="font-size: 0.95rem; font-weight: 600">Instância WhatsApp Online</h3>
                   <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem">
@@ -1115,72 +946,41 @@ onUnmounted(() => {
 
               <!-- Ações -->
               <div style="display: flex; gap: 1rem; margin-top: 1rem">
-                <button
-                  v-if="selectedSession.status === 'CONNECTED'"
-                  class="btn btn-secondary"
-                  style="width: auto"
-                  @click="handleDisconnect(selectedSession.id)"
-                >
+                <button v-if="selectedSession.status === 'CONNECTED'" class="btn btn-secondary" style="width: auto"
+                  @click="handleDisconnect(selectedSession.id)">
                   Desconectar Instância
                 </button>
-                <button
-                  class="btn btn-danger"
-                  style="width: auto; margin-left: auto"
-                  @click="handleSessionLogout(selectedSession.id)"
-                >
+                <button class="btn btn-danger" style="width: auto; margin-left: auto"
+                  @click="handleSessionLogout(selectedSession.id)">
                   Excluir e Resetar Conexão
                 </button>
               </div>
 
               <!-- Disparo de Mensagem de Teste -->
-              <div
-                v-if="selectedSession.status === 'CONNECTED'"
-                class="test-send-form"
-                style="
+              <div v-if="selectedSession.status === 'CONNECTED'" class="test-send-form" style="
                   margin-top: 2.5rem;
                   border-top: 1px solid var(--border-color);
                   padding-top: 2rem;
-                "
-              >
+                ">
                 <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem">
                   Disparar Mensagem de Teste
                 </h3>
-                <div
-                  v-if="testMessage.status"
-                  class="alert"
-                  :class="testMessage.status === 'success' ? 'alert-success' : 'alert-error'"
-                >
+                <div v-if="testMessage.status" class="alert"
+                  :class="testMessage.status === 'success' ? 'alert-success' : 'alert-error'">
                   {{ testMessage.message }}
                 </div>
                 <form @submit.prevent="handleSendTestMessage">
                   <div class="form-group">
                     <label class="form-label" for="test-to">JID ou Número do Destinatário</label>
-                    <input
-                      id="test-to"
-                      v-model="testMessage.to"
-                      type="text"
-                      class="form-input"
-                      placeholder="Ex: 5511999999999"
-                      required
-                    />
+                    <input id="test-to" v-model="testMessage.to" type="text" class="form-input"
+                      placeholder="Ex: 5511999999999" required />
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="test-text">Mensagem</label>
-                    <textarea
-                      id="test-text"
-                      v-model="testMessage.text"
-                      class="form-input"
-                      rows="3"
-                      placeholder="Escreva o texto aqui..."
-                      required
-                    ></textarea>
+                    <textarea id="test-text" v-model="testMessage.text" class="form-input" rows="3"
+                      placeholder="Escreva o texto aqui..." required></textarea>
                   </div>
-                  <button
-                    type="submit"
-                    class="btn btn-primary"
-                    style="width: auto"
-                    :disabled="testMessage.sending"
-                  >
+                  <button type="submit" class="btn btn-primary" style="width: auto" :disabled="testMessage.sending">
                     {{ testMessage.sending ? 'Enviando...' : 'Enviar Mensagem' }}
                   </button>
                 </form>
@@ -1213,70 +1013,35 @@ onUnmounted(() => {
 
             <!-- Campos Condicionais baseados no provedor -->
             <div class="form-group">
-              <label class="form-label" for="ai-api-key"
-                >Chave de API / Token de Acesso (API Key)</label
-              >
-              <input
-                id="ai-api-key"
-                v-model="aiConfig.aiApiKey"
-                type="password"
-                class="form-input"
-                placeholder="Chave de API (Opcional - Requerido se usar OpenAI/Gemini ou Ollama-cloud/remoto autenticado)"
-              />
-              <span class="form-help"
-                >Seu token é armazenado com criptografia segura no banco de dados.</span
-              >
+              <label class="form-label" for="ai-api-key">Chave de API / Token de Acesso (API Key)</label>
+              <input id="ai-api-key" v-model="aiConfig.aiApiKey" type="password" class="form-input"
+                placeholder="Chave de API (Opcional - Requerido se usar OpenAI/Gemini ou Ollama-cloud/remoto autenticado)" />
+              <span class="form-help">Seu token é armazenado com criptografia segura no banco de dados.</span>
             </div>
 
             <div v-if="aiConfig.aiProvider !== 'gemini'" class="form-group">
               <label class="form-label" for="ai-base-url">URL Base da API (Base URL)</label>
-              <input
-                id="ai-base-url"
-                v-model="aiConfig.aiBaseUrl"
-                type="url"
-                class="form-input"
-                placeholder="Ex: https://api.openai.com/v1 ou http://localhost:11434/v1"
-              />
-              <span class="form-help"
-                >Requerido se usar provedor compatível como Ollama, Together AI, DeepSeek ou
-                Llama.cpp.</span
-              >
+              <input id="ai-base-url" v-model="aiConfig.aiBaseUrl" type="url" class="form-input"
+                placeholder="Ex: https://api.openai.com/v1 ou http://localhost:11434/v1" />
+              <span class="form-help">Requerido se usar provedor compatível como Ollama, Together AI, DeepSeek ou
+                Llama.cpp.</span>
             </div>
 
             <div class="form-group">
               <label class="form-label" for="ai-chat-model">Modelo de Chat (Chat Model)</label>
-              <input
-                id="ai-chat-model"
-                v-model="aiConfig.aiChatModel"
-                type="text"
-                class="form-input"
-                placeholder="Ex: gemini-1.5-flash, gpt-4o-mini ou llama3"
-              />
+              <input id="ai-chat-model" v-model="aiConfig.aiChatModel" type="text" class="form-input"
+                placeholder="Ex: gemini-1.5-flash, gpt-4o-mini ou llama3" />
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="ai-embedding-model"
-                >Modelo de Embedding (Embedding Model)</label
-              >
-              <input
-                id="ai-embedding-model"
-                v-model="aiConfig.aiEmbeddingModel"
-                type="text"
-                class="form-input"
-                placeholder="Ex: text-embedding-005, text-embedding-3-small ou nomic-embed-text"
-              />
-              <span class="form-help"
-                >Modelo que gera vetores no pgvector. Deve gerar vetores com 768 dimensões (ou
-                diminuído nativamente).</span
-              >
+              <label class="form-label" for="ai-embedding-model">Modelo de Embedding (Embedding Model)</label>
+              <input id="ai-embedding-model" v-model="aiConfig.aiEmbeddingModel" type="text" class="form-input"
+                placeholder="Ex: text-embedding-005, text-embedding-3-small ou nomic-embed-text" />
+              <span class="form-help">Modelo que gera vetores no pgvector. Deve gerar vetores com 768 dimensões (ou
+                diminuído nativamente).</span>
             </div>
 
-            <button
-              type="submit"
-              class="btn btn-primary"
-              style="width: auto"
-              :disabled="aiConfigLoading"
-            >
+            <button type="submit" class="btn btn-primary" style="width: auto" :disabled="aiConfigLoading">
               {{ aiConfigLoading ? 'Salvando...' : 'Salvar Configurações' }}
             </button>
           </form>
@@ -1291,36 +1056,20 @@ onUnmounted(() => {
           </p>
 
           <!-- Formulário Criar Chave -->
-          <form
-            @submit.prevent="handleCreateApiKey"
-            style="display: flex; gap: 1rem; margin-bottom: 2rem; align-items: flex-end"
-          >
+          <form @submit.prevent="handleCreateApiKey"
+            style="display: flex; gap: 1rem; margin-bottom: 2rem; align-items: flex-end">
             <div class="form-group" style="flex: 1; margin-bottom: 0">
               <label class="form-label" for="key-name">Nome da Chave</label>
-              <input
-                id="key-name"
-                v-model="newKeyName"
-                type="text"
-                class="form-input"
-                placeholder="Ex: Sistema ERP Financeiro"
-                required
-              />
+              <input id="key-name" v-model="newKeyName" type="text" class="form-input"
+                placeholder="Ex: Sistema ERP Financeiro" required />
             </div>
-            <button
-              type="submit"
-              class="btn btn-primary"
-              style="width: auto; height: 42px"
-              :disabled="creatingKey"
-            >
+            <button type="submit" class="btn btn-primary" style="width: auto; height: 42px" :disabled="creatingKey">
               {{ creatingKey ? 'Gerando...' : 'Gerar Chave' }}
             </button>
           </form>
 
           <!-- Tabela de chaves de API -->
-          <div
-            v-if="apiKeys.length === 0"
-            style="text-align: center; color: var(--text-muted); padding: 2rem 0"
-          >
+          <div v-if="apiKeys.length === 0" style="text-align: center; color: var(--text-muted); padding: 2rem 0">
             Nenhuma chave de API ativa encontrada.
           </div>
           <table v-else class="logs-table">
@@ -1344,11 +1093,8 @@ onUnmounted(() => {
                 </td>
                 <td>{{ formatDate(key.createdAt) }}</td>
                 <td style="text-align: right">
-                  <button
-                    class="btn btn-danger"
-                    style="width: auto; padding: 0.25rem 0.5rem; font-size: 0.75rem"
-                    @click="handleDeleteApiKey(key.id)"
-                  >
+                  <button class="btn btn-danger" style="width: auto; padding: 0.25rem 0.5rem; font-size: 0.75rem"
+                    @click="handleDeleteApiKey(key.id)">
                     Revogar
                   </button>
                 </td>
@@ -1365,25 +1111,20 @@ onUnmounted(() => {
             depuração de integrações.
           </p>
 
-          <div
-            v-if="logsLoading"
-            style="text-align: center; padding: 2rem 0; color: var(--text-secondary)"
-          >
+          <div v-if="logsLoading" style="text-align: center; padding: 2rem 0; color: var(--text-secondary)">
             Carregando registros...
           </div>
 
           <div v-else class="logs-container-split">
             <!-- Coluna de Mensagens Enviadas -->
             <div class="logs-section">
-              <h3
-                style="
+              <h3 style="
                   font-size: 1rem;
                   font-weight: 600;
                   margin-bottom: 1rem;
                   border-left: 3px solid var(--primary-color);
                   padding-left: 0.5rem;
-                "
-              >
+                ">
                 Últimas Mensagens Disparadas
               </h3>
               <div v-if="sentMessages.length === 0" class="logs-empty">
@@ -1391,28 +1132,21 @@ onUnmounted(() => {
               </div>
               <div v-else class="logs-scroll">
                 <div v-for="msg in sentMessages" :key="msg.id" class="log-row-item">
-                  <div
-                    style="
+                  <div style="
                       display: flex;
                       justify-content: space-between;
                       font-size: 0.75rem;
                       color: var(--text-muted);
-                    "
-                  >
-                    <span
-                      >Para: <strong>{{ msg.recipient.split('@')[0] }}</strong></span
-                    >
+                    ">
+                    <span>Para: <strong>{{ msg.recipient.split('@')[0] }}</strong></span>
                     <span>{{ formatDate(msg.createdAt) }}</span>
                   </div>
                   <p style="font-size: 0.85rem; margin-top: 0.25rem; color: var(--text-primary)">
                     {{ msg.content }}
                   </p>
                   <div style="margin-top: 0.35rem">
-                    <span
-                      class="badge badge-connected"
-                      style="font-size: 0.65rem; padding: 0.15rem 0.35rem"
-                      >{{ msg.status }}</span
-                    >
+                    <span class="badge badge-connected" style="font-size: 0.65rem; padding: 0.15rem 0.35rem">{{
+                      msg.status }}</span>
                   </div>
                 </div>
               </div>
@@ -1420,15 +1154,13 @@ onUnmounted(() => {
 
             <!-- Coluna de Webhook Logs -->
             <div class="logs-section">
-              <h3
-                style="
+              <h3 style="
                   font-size: 1rem;
                   font-weight: 600;
                   margin-bottom: 1rem;
                   border-left: 3px solid var(--status-disconnected);
                   padding-left: 0.5rem;
-                "
-              >
+                ">
                 Callbacks e Webhook Logs
               </h3>
               <div v-if="webhookLogs.length === 0" class="logs-empty">
@@ -1436,32 +1168,23 @@ onUnmounted(() => {
               </div>
               <div v-else class="logs-scroll">
                 <div v-for="log in webhookLogs" :key="log.id" class="log-row-item">
-                  <div
-                    style="
+                  <div style="
                       display: flex;
                       justify-content: space-between;
                       font-size: 0.75rem;
                       color: var(--text-muted);
-                    "
-                  >
-                    <span
-                      >Evento: <strong>{{ log.event }}</strong></span
-                    >
+                    ">
+                    <span>Evento: <strong>{{ log.event }}</strong></span>
                     <span>{{ formatDate(log.createdAt) }}</span>
                   </div>
-                  <div
-                    style="
+                  <div style="
                       margin-top: 0.35rem;
                       display: flex;
                       justify-content: space-between;
                       align-items: center;
-                    "
-                  >
-                    <span
-                      class="badge"
-                      :class="log.success ? 'badge-connected' : 'badge-disconnected'"
-                      style="font-size: 0.65rem; padding: 0.15rem 0.35rem"
-                    >
+                    ">
+                    <span class="badge" :class="log.success ? 'badge-connected' : 'badge-disconnected'"
+                      style="font-size: 0.65rem; padding: 0.15rem 0.35rem">
                       {{ log.success ? 'Sucesso' : 'Falha' }} (HTTP {{ log.statusCode || 'N/A' }})
                     </span>
                   </div>
@@ -1475,45 +1198,22 @@ onUnmounted(() => {
 
     <!-- Container de Toasts (Notificações Flutuantes) -->
     <div class="toast-container">
-      <div
-        v-for="toast in toasts"
-        :key="toast.id"
-        class="toast-item"
-        :class="'toast-' + toast.type"
-      >
+      <div v-for="toast in toasts" :key="toast.id" class="toast-item" :class="'toast-' + toast.type">
         <span class="toast-icon">
-          <svg
-            v-if="toast.type === 'success'"
-            width="16"
-            height="16"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fill-rule="evenodd"
+          <svg v-if="toast.type === 'success'" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
               d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clip-rule="evenodd"
-            />
+              clip-rule="evenodd" />
           </svg>
-          <svg
-            v-else-if="toast.type === 'error'"
-            width="16"
-            height="16"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fill-rule="evenodd"
+          <svg v-else-if="toast.type === 'error'" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
               d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clip-rule="evenodd"
-            />
+              clip-rule="evenodd" />
           </svg>
           <svg v-else width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-            <path
-              fill-rule="evenodd"
+            <path fill-rule="evenodd"
               d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-              clip-rule="evenodd"
-            />
+              clip-rule="evenodd" />
           </svg>
         </span>
         <span class="toast-message">{{ toast.message }}</span>
@@ -1534,12 +1234,8 @@ onUnmounted(() => {
           <button class="btn btn-secondary" style="width: auto" @click="confirmModal.onCancel">
             {{ confirmModal.cancelText }}
           </button>
-          <button
-            class="btn"
-            :class="confirmModal.isDanger ? 'btn-danger' : 'btn-primary'"
-            style="width: auto"
-            @click="confirmModal.onConfirm"
-          >
+          <button class="btn" :class="confirmModal.isDanger ? 'btn-danger' : 'btn-primary'" style="width: auto"
+            @click="confirmModal.onConfirm">
             {{ confirmModal.confirmText }}
           </button>
         </div>
@@ -1798,6 +1494,7 @@ onUnmounted(() => {
     transform: translateX(120%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -1807,6 +1504,7 @@ onUnmounted(() => {
 .toast-success {
   border-left: 4px solid var(--status-connected);
 }
+
 .toast-success .toast-icon {
   color: var(--status-connected);
 }
@@ -1814,6 +1512,7 @@ onUnmounted(() => {
 .toast-error {
   border-left: 4px solid var(--status-disconnected);
 }
+
 .toast-error .toast-icon {
   color: var(--status-disconnected);
 }
@@ -1821,6 +1520,7 @@ onUnmounted(() => {
 .toast-info {
   border-left: 4px solid var(--primary-color);
 }
+
 .toast-info .toast-icon {
   color: var(--primary-color);
 }
@@ -1843,6 +1543,7 @@ onUnmounted(() => {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -1864,6 +1565,7 @@ onUnmounted(() => {
     transform: scale(0.95);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;

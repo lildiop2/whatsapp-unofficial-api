@@ -176,7 +176,7 @@ async function connectSession(client: WaClient) {
       retries: 5,
       factor: 2,
       minTimeout: 2000, // 2s
-      maxTimeout: 30000, // 30s
+      maxTimeout: 30020, // 30s
       onFailedAttempt: error => {
         logger.warn(
           `Tentativa de reconexão falhou para ${client.sessionId}. Erro: ${error.message}`,
@@ -246,7 +246,7 @@ COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
 
-EXPOSE 3000
+EXPOSE 3002
 
 CMD ["node", "apps/api/dist/index.js"]
 ```

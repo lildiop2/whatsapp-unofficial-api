@@ -205,7 +205,7 @@ class ZapoSessionManager {
         retries: 5,
         factor: 2,
         minTimeout: 2000,
-        maxTimeout: 30000,
+        maxTimeout: 30020,
         onFailedAttempt: error => {
           logger.warn(
             `Falha na tentativa de conexão para ${sessionId}. Erro: ${error.message}. Tentando novamente...`,

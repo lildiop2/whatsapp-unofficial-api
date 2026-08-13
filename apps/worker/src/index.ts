@@ -98,7 +98,7 @@ async function main() {
             .runAgent(sessionId, textContent)
             .then(async aiReply => {
               logger.info(`Agente RAG gerou resposta: "${aiReply}"`);
-              const apiPort = process.env.PORT || 3000;
+              const apiPort = process.env.PORT || 3002;
               const sendResponse = await fetch(`http://localhost:${apiPort}/messages/send`, {
                 method: 'POST',
                 headers: {
