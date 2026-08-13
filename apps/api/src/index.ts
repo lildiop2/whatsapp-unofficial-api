@@ -17,6 +17,8 @@ import tenantRoutes from './routes/tenant.routes.js';
 import { zapoSessionManager } from './services/zapo.service.js';
 import { queueService } from './services/queue.service.js';
 import { authenticateHybrid } from './middlewares/auth.middleware.js';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerDocument } from './swagger.js';
 
 import cors from 'cors';
 
@@ -49,6 +51,7 @@ app.use(
 app.use(express.json());
 
 // Rotas da API
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/auth', authRoutes);
 app.use('/tenant', tenantRoutes);
 app.use('/sessions', authenticateHybrid, sessionRoutes);

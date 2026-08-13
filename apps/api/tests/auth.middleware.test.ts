@@ -50,7 +50,7 @@ describe('Authorization Roles Middleware', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         error: 'Acesso negado. Nível de permissão insuficiente para acessar este recurso.',
-      })
+      }),
     );
   });
 

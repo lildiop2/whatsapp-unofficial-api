@@ -50,7 +50,7 @@ describe('Validation Middleware', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         error: 'Erro de validação de dados de entrada.',
-      })
+      }),
     );
   });
 });
