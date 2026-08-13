@@ -17,16 +17,39 @@ enum SessionStatus {
   CONNECTED
 }
 
+model Tenant {
+  id        String            @id @default(uuid())
+  name      String
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  users     User[]
+  sessions  WhatsappSession[]
+  apiKeys   ApiKey[]
+}
+
+model ApiKey {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  name      String
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model WhatsappSession {
   id          String             @id @default(uuid()) // sessionId correspondente no Zapo
+  tenantId    String
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name        String
   status      SessionStatus      @default(DISCONNECTED)
   webhookUrl  String?

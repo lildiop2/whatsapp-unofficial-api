@@ -1,9 +1,10 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Readable } from 'node:stream';
 import { zapoSessionManager } from '../services/zapo.service.js';
 import { prisma } from '../services/prisma.service.js';
+import { TenantRequest } from '../types/index.js';
 
-export const sendMessage = async (req: Request, res: Response) => {
+export const sendMessage = async (req: TenantRequest, res: Response) => {
   const {
     sessionId,
     to,
@@ -16,6 +17,7 @@ export const sendMessage = async (req: Request, res: Response) => {
     presenceDelay,
     presenceType,
   } = req.body;
+  const tenantId = req.tenantId!;
 
   if (!sessionId) {
     return res.status(400).json({ error: 'O campo "sessionId" é obrigatório.' });
@@ -29,19 +31,30 @@ export const sendMessage = async (req: Request, res: Response) => {
     });
   }
 
-  const client = zapoSessionManager.getClient(sessionId);
-  if (!client) {
-    return res.status(444).json({ error: `Sessão ${sessionId} não está ativa ou conectada.` });
-  }
-
   try {
+    // 1. Garantir isolamento de dados: verificar se a sessão pertence ao Tenant da requisição
+    const session = await prisma.whatsappSession.findUnique({
+      where: { id: sessionId },
+    });
+
+    if (!session || session.tenantId !== tenantId) {
+      return res
+        .status(444)
+        .json({ error: `Sessão ${sessionId} não encontrada ou sem permissão.` });
+    }
+
+    const client = zapoSessionManager.getClient(sessionId);
+    if (!client) {
+      return res.status(444).json({ error: `Sessão ${sessionId} não está ativa ou conectada.` });
+    }
+
     // Normalizar JID de destino (se for apenas dígitos, Zapo resolve, mas adicionamos sufixo se necessário)
     let targetJid = to;
     if (!to.includes('@')) {
       targetJid = `${to}@s.whatsapp.net`;
     }
 
-    // 1. Simular Estado Humano (Typing/Recording) se solicitado
+    // 2. Simular Estado Humano (Typing/Recording) se solicitado
     if (presenceDelay && presenceDelay > 0 && presenceType) {
       const validStates = ['composing', 'recording', 'paused'];
       if (validStates.includes(presenceType)) {
@@ -54,7 +67,7 @@ export const sendMessage = async (req: Request, res: Response) => {
 
     let publishResult;
 
-    // 2. Tratar envio de Mídia
+    // 3. Tratar envio de Mídia
     if (mediaUrl) {
       let mediaSource: string | Readable = mediaUrl;
 
@@ -83,7 +96,7 @@ export const sendMessage = async (req: Request, res: Response) => {
         fileName: fileName,
       });
     } else {
-      // 3. Tratar envio de Texto simples
+      // 4. Tratar envio de Texto simples
       publishResult = await client.message.send(targetJid, {
         type: 'text',
         text: text,
@@ -91,7 +104,7 @@ export const sendMessage = async (req: Request, res: Response) => {
       });
     }
 
-    // 4. Salvar histórico de mensagem enviada no Prisma
+    // 5. Salvar histórico de mensagem enviada no Prisma
     const messageId = publishResult.id || crypto.randomUUID();
     await prisma.sentMessage.create({
       data: {

@@ -1,9 +1,11 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { zapoSessionManager } from '../services/zapo.service.js';
 import { prisma } from '../services/prisma.service.js';
+import { TenantRequest } from '../types/index.js';
 
-export const createSession = async (req: Request, res: Response) => {
+export const createSession = async (req: TenantRequest, res: Response) => {
   const { id, name, webhookUrl } = req.body;
+  const tenantId = req.tenantId!;
 
   if (!name) {
     return res.status(400).json({ error: 'O campo "name" é obrigatório.' });
@@ -21,10 +23,11 @@ export const createSession = async (req: Request, res: Response) => {
       return res.status(400).json({ error: `Sessão com ID ${sessionId} já existe.` });
     }
 
-    // Criar a sessão no banco
+    // Criar a sessão no banco vinculada ao Tenant
     const session = await prisma.whatsappSession.create({
       data: {
         id: sessionId,
+        tenantId,
         name,
         webhookUrl,
         status: 'DISCONNECTED',
@@ -42,9 +45,12 @@ export const createSession = async (req: Request, res: Response) => {
   }
 };
 
-export const listSessions = async (req: Request, res: Response) => {
+export const listSessions = async (req: TenantRequest, res: Response) => {
+  const tenantId = req.tenantId!;
+
   try {
     const sessions = await prisma.whatsappSession.findMany({
+      where: { tenantId },
       orderBy: { createdAt: 'desc' },
     });
     return res.json(sessions);
@@ -53,16 +59,17 @@ export const listSessions = async (req: Request, res: Response) => {
   }
 };
 
-export const getSessionStatus = async (req: Request, res: Response) => {
+export const getSessionStatus = async (req: TenantRequest, res: Response) => {
   const { id } = req.params;
+  const tenantId = req.tenantId!;
 
   try {
     const session = await prisma.whatsappSession.findUnique({
       where: { id },
     });
 
-    if (!session) {
-      return res.status(444).json({ error: `Sessão ${id} não encontrada.` });
+    if (!session || session.tenantId !== tenantId) {
+      return res.status(444).json({ error: `Sessão ${id} não encontrada ou sem permissão.` });
     }
 
     const qr = zapoSessionManager.getSessionQr(id);
@@ -81,16 +88,17 @@ export const getSessionStatus = async (req: Request, res: Response) => {
   }
 };
 
-export const disconnectSession = async (req: Request, res: Response) => {
+export const disconnectSession = async (req: TenantRequest, res: Response) => {
   const { id } = req.params;
+  const tenantId = req.tenantId!;
 
   try {
     const session = await prisma.whatsappSession.findUnique({
       where: { id },
     });
 
-    if (!session) {
-      return res.status(444).json({ error: `Sessão ${id} não encontrada.` });
+    if (!session || session.tenantId !== tenantId) {
+      return res.status(444).json({ error: `Sessão ${id} não encontrada ou sem permissão.` });
     }
 
     await zapoSessionManager.disconnectSession(id);
@@ -100,16 +108,17 @@ export const disconnectSession = async (req: Request, res: Response) => {
   }
 };
 
-export const logoutSession = async (req: Request, res: Response) => {
+export const logoutSession = async (req: TenantRequest, res: Response) => {
   const { id } = req.params;
+  const tenantId = req.tenantId!;
 
   try {
     const session = await prisma.whatsappSession.findUnique({
       where: { id },
     });
 
-    if (!session) {
-      return res.status(444).json({ error: `Sessão ${id} não encontrada.` });
+    if (!session || session.tenantId !== tenantId) {
+      return res.status(444).json({ error: `Sessão ${id} não encontrada ou sem permissão.` });
     }
 
     await zapoSessionManager.logoutSession(id);

@@ -14,6 +14,7 @@ import sessionRoutes from './routes/session.routes.js';
 import messageRoutes from './routes/message.routes.js';
 import { zapoSessionManager } from './services/zapo.service.js';
 import { queueService } from './services/queue.service.js';
+import { authenticateApiKey } from './middlewares/auth.middleware.js';
 
 import cors from 'cors';
 
@@ -24,8 +25,8 @@ app.use(cors());
 app.use(express.json());
 
 // Rotas da API
-app.use('/sessions', sessionRoutes);
-app.use('/messages', messageRoutes);
+app.use('/sessions', authenticateApiKey, sessionRoutes);
+app.use('/messages', authenticateApiKey, messageRoutes);
 
 app.get('/health', (req, res) => {
   const status: SessionStatus = 'DISCONNECTED';

@@ -18,6 +18,7 @@ const sessions = ref<Session[]>([]);
 const selectedSessionId = ref<string | null>(null);
 const selectedSession = ref<Session | null>(null);
 
+const apiKey = ref('zap_default_dev_key_123');
 const creatingSession = ref(false);
 
 const newSession = ref({
@@ -39,7 +40,11 @@ let pollInterval: ReturnType<typeof setInterval> | null = null;
 // Buscar todas as sessões
 const fetchSessions = async () => {
   try {
-    const res = await fetch(`${API_BASE}/sessions`);
+    const res = await fetch(`${API_BASE}/sessions`, {
+      headers: {
+        Authorization: `Bearer ${apiKey.value}`,
+      },
+    });
     if (!res.ok) throw new Error('Falha ao obter lista de sessões.');
     sessions.value = await res.json();
   } catch (err: any) {
@@ -50,7 +55,11 @@ const fetchSessions = async () => {
 // Buscar status de uma sessão específica
 const fetchSessionStatus = async (id: string) => {
   try {
-    const res = await fetch(`${API_BASE}/sessions/${id}/status`);
+    const res = await fetch(`${API_BASE}/sessions/${id}/status`, {
+      headers: {
+        Authorization: `Bearer ${apiKey.value}`,
+      },
+    });
     if (res.status === 444) {
       // Sessão removida no banco
       if (selectedSessionId.value === id) {
@@ -102,7 +111,10 @@ const handleCreateSession = async () => {
   try {
     const res = await fetch(`${API_BASE}/sessions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey.value}`,
+      },
       body: JSON.stringify({
         id: newSession.value.id.trim() || undefined,
         name: newSession.value.name.trim(),
@@ -130,7 +142,12 @@ const handleCreateSession = async () => {
 const handleDisconnect = async (id: string) => {
   if (!confirm('Deseja desconectar esta sessão do WhatsApp temporariamente?')) return;
   try {
-    const res = await fetch(`${API_BASE}/sessions/${id}/disconnect`, { method: 'POST' });
+    const res = await fetch(`${API_BASE}/sessions/${id}/disconnect`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey.value}`,
+      },
+    });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erro ao desconectar.');
     await fetchSessionStatus(id);
@@ -148,7 +165,12 @@ const handleLogout = async (id: string) => {
   )
     return;
   try {
-    const res = await fetch(`${API_BASE}/sessions/${id}/logout`, { method: 'POST' });
+    const res = await fetch(`${API_BASE}/sessions/${id}/logout`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey.value}`,
+      },
+    });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Erro ao realizar logout.');
 
@@ -170,7 +192,10 @@ const handleSendTestMessage = async () => {
   try {
     const res = await fetch(`${API_BASE}/messages/send`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey.value}`,
+      },
       body: JSON.stringify({
         sessionId: selectedSessionId.value,
         to: testMessage.value.to.trim(),
@@ -245,8 +270,27 @@ onUnmounted(() => {
     </header>
 
     <div class="dashboard-grid">
-      <!-- Coluna Esquerda: Cadastro e Lista -->
+      <!-- Coluna Esquerda: Configurações, Cadastro e Lista -->
       <aside class="sidebar">
+        <!-- Card de Configuração SaaS -->
+        <div class="card">
+          <h2 class="card-title">Configurações do Tenant (SaaS)</h2>
+          <div class="form-group" style="margin-bottom: 0">
+            <label class="form-label" for="api-key-input">Chave de API do Tenant</label>
+            <input
+              id="api-key-input"
+              v-model="apiKey"
+              type="text"
+              class="form-input"
+              placeholder="Digite a chave de API..."
+              style="font-family: var(--font-mono); font-size: 0.8rem"
+            />
+            <span class="form-help"
+              >Passe a chave para isolar sessões e dados de banco de dados.</span
+            >
+          </div>
+        </div>
+
         <!-- Card de Cadastro -->
         <div class="card">
           <h2 class="card-title">Nova Instância</h2>
@@ -416,7 +460,9 @@ onUnmounted(() => {
           <div class="session-metadata-grid">
             <div class="metadata-item">
               <div class="metadata-item-label">Status da Conexão</div>
-              <div class="metadata-item-value">{{ selectedSession.status }}</div>
+              <div class="metadata-item-value">
+                {{ selectedSession.status }}
+              </div>
             </div>
             <div class="metadata-item">
               <div class="metadata-item-label">Webhook URL</div>
@@ -512,7 +558,7 @@ onUnmounted(() => {
 
             <form @submit.prevent="handleSendTestMessage">
               <div class="form-group">
-                <label class="form-label" for="test-to"
+                <label class="form-label" for="test-to" :value="testMessage.to"
                   >Número do Destinatário (WhatsApp JID ou Dígitos)</label
                 >
                 <input
