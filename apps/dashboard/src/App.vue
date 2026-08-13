@@ -35,8 +35,14 @@ interface WebhookLog {
   createdAt: string;
 }
 
+interface Toast {
+  id: number;
+  message: string;
+  type: 'success' | 'error' | 'info';
+}
+
 // Configurações do Servidor
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002';
 
 // Estados de Autenticação
 const token = ref<string | null>(localStorage.getItem('token'));
@@ -103,6 +109,30 @@ const sentMessages = ref<SentMessage[]>([]);
 const webhookLogs = ref<WebhookLog[]>([]);
 const logsLoading = ref(false);
 
+// Estados de Toasts (Mensagens Flash)
+const toasts = ref<Toast[]>([]);
+let nextToastId = 0;
+
+// Estados de Modais de Confirmação e Alerta Customizados
+const confirmModal = ref({
+  visible: false,
+  title: '',
+  message: '',
+  confirmText: 'Confirmar',
+  cancelText: 'Cancelar',
+  isDanger: false,
+  onConfirm: () => {},
+  onCancel: () => {},
+});
+
+const alertModal = ref({
+  visible: false,
+  title: '',
+  message: '',
+  buttonText: 'Ok',
+  onClose: () => {},
+});
+
 let pollInterval: ReturnType<typeof setInterval> | null = null;
 
 // Helpers de Cabeçalhos HTTP
@@ -110,6 +140,54 @@ const getHeaders = () => {
   return {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${token.value}`,
+  };
+};
+
+// Funções Utilitárias de UX (Toasts & Modais Customizados)
+const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  const id = nextToastId++;
+  toasts.value.push({ id, message, type });
+  setTimeout(() => {
+    toasts.value = toasts.value.filter(t => t.id !== id);
+  }, 4000);
+};
+
+const showConfirm = (options: {
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  isDanger?: boolean;
+  onConfirm: () => void;
+  onCancel?: () => void;
+}) => {
+  confirmModal.value = {
+    visible: true,
+    title: options.title,
+    message: options.message,
+    confirmText: options.confirmText || 'Confirmar',
+    cancelText: options.cancelText || 'Cancelar',
+    isDanger: !!options.isDanger,
+    onConfirm: () => {
+      options.onConfirm();
+      confirmModal.value.visible = false;
+    },
+    onCancel: () => {
+      if (options.onCancel) options.onCancel();
+      confirmModal.value.visible = false;
+    },
+  };
+};
+
+const showAlert = (title: string, message: string, buttonText = 'Entendido') => {
+  alertModal.value = {
+    visible: true,
+    title,
+    message,
+    buttonText,
+    onClose: () => {
+      alertModal.value.visible = false;
+    },
   };
 };
 
@@ -157,12 +235,13 @@ const handleLogin = async () => {
     localStorage.setItem('token', data.token);
     userProfile.value = data.user;
 
-    // Resetar formulário e carregar dados
     authForm.value = { email: '', password: '', name: '', tenantName: '' };
     await fetchMe();
     await fetchSessions();
+    showToast('Login efetuado com sucesso!', 'success');
   } catch (err: any) {
     authError.value = err.message;
+    showAlert('Falha no Login', err.message);
   } finally {
     authLoading.value = false;
   }
@@ -194,8 +273,10 @@ const handleRegister = async () => {
     authForm.value = { email: '', password: '', name: '', tenantName: '' };
     await fetchMe();
     await fetchSessions();
+    showToast('Organização cadastrada com sucesso!', 'success');
   } catch (err: any) {
     authError.value = err.message;
+    showAlert('Erro no Cadastro', err.message);
   } finally {
     authLoading.value = false;
   }
@@ -213,6 +294,7 @@ const handleLogout = () => {
     clearInterval(pollInterval);
     pollInterval = null;
   }
+  showToast('Você saiu da sua conta.', 'info');
 };
 
 // Instâncias: Buscar Lista
@@ -288,8 +370,9 @@ const handleCreateSession = async () => {
     newSession.value = { id: '', name: '', webhookUrl: '' };
     await fetchSessions();
     selectSession(data.id);
+    showToast('Instância criada com sucesso.', 'success');
   } catch (err: any) {
-    alert(err.message);
+    showToast(err.message, 'error');
   } finally {
     creatingSession.value = false;
   }
@@ -297,37 +380,55 @@ const handleCreateSession = async () => {
 
 // Instâncias: Desconectar
 const handleDisconnect = async (id: string) => {
-  if (!confirm('Deseja desconectar esta sessão temporariamente?')) return;
-  try {
-    const res = await fetch(`${API_BASE}/sessions/${id}/disconnect`, {
-      method: 'POST',
-      headers: getHeaders(),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Erro ao desconectar.');
-    await fetchSessionStatus(id);
-  } catch (err: any) {
-    alert(err.message);
-  }
+  showConfirm({
+    title: 'Desconectar Instância',
+    message:
+      'Deseja desconectar esta sessão temporariamente? O motor de IA ficará inativo até que ela seja reconectada.',
+    confirmText: 'Desconectar',
+    isDanger: true,
+    onConfirm: async () => {
+      try {
+        const res = await fetch(`${API_BASE}/sessions/${id}/disconnect`, {
+          method: 'POST',
+          headers: getHeaders(),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro ao desconectar.');
+        await fetchSessionStatus(id);
+        showToast('Instância desconectada com sucesso.', 'success');
+      } catch (err: any) {
+        showToast(err.message, 'error');
+      }
+    },
+  });
 };
 
 // Instâncias: Logout Criptográfico/Remoção
 const handleSessionLogout = async (id: string) => {
-  if (!confirm('Deseja desvincular e excluir definitivamente esta sessão do banco?')) return;
-  try {
-    const res = await fetch(`${API_BASE}/sessions/${id}/logout`, {
-      method: 'POST',
-      headers: getHeaders(),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Erro ao realizar logout.');
+  showConfirm({
+    title: 'Desvincular Instância',
+    message:
+      'Deseja desvincular e excluir definitivamente esta sessão do banco? Todos os dados de login locais serão apagados do servidor.',
+    confirmText: 'Excluir Instância',
+    isDanger: true,
+    onConfirm: async () => {
+      try {
+        const res = await fetch(`${API_BASE}/sessions/${id}/logout`, {
+          method: 'POST',
+          headers: getHeaders(),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro ao realizar logout.');
 
-    selectedSessionId.value = null;
-    selectedSession.value = null;
-    await fetchSessions();
-  } catch (err: any) {
-    alert(err.message);
-  }
+        selectedSessionId.value = null;
+        selectedSession.value = null;
+        await fetchSessions();
+        showToast('Instância excluída e desconectada.', 'success');
+      } catch (err: any) {
+        showToast(err.message, 'error');
+      }
+    },
+  });
 };
 
 // Instâncias: Enviar Mensagem de Teste
@@ -353,12 +454,14 @@ const handleSendTestMessage = async () => {
       testMessage.value.status = 'success';
       testMessage.value.message = `Mensagem enviada com sucesso! ID: ${data.messageId}`;
       testMessage.value.text = '';
+      showToast('Mensagem enviada com sucesso!', 'success');
     } else {
       throw new Error(data.error || 'Erro desconhecido.');
     }
   } catch (err: any) {
     testMessage.value.status = 'error';
     testMessage.value.message = `Erro ao enviar: ${err.message}`;
+    showToast(err.message, 'error');
   } finally {
     testMessage.value.sending = false;
   }
@@ -372,14 +475,14 @@ const fetchAiConfig = async () => {
     if (res.ok) {
       const data = await res.json();
       aiConfig.value = {
-        aiProvider: data.aiProvider || 'gemini',
+        aiProvider: data.aiProvider || 'ollama',
         aiApiKey: data.aiApiKey || '',
         aiBaseUrl: data.aiBaseUrl || '',
         aiChatModel: data.aiChatModel || '',
         aiEmbeddingModel: data.aiEmbeddingModel || '',
       };
       if (userProfile.value && userProfile.value.role !== 'SUPER_ADMIN') {
-        tenantName.value = 'Painel do Tenant'; // Pode ser melhorado se salvarmos o nome da org
+        tenantName.value = 'Painel do Tenant';
       }
     }
   } catch (err) {
@@ -408,11 +511,12 @@ const handleUpdateAiConfig = async () => {
     if (!res.ok) throw new Error(data.error || 'Erro ao salvar configuração.');
 
     aiConfigSuccess.value = true;
+    showToast('Configurações de IA salvas com sucesso!', 'success');
     setTimeout(() => {
       aiConfigSuccess.value = false;
     }, 4000);
   } catch (err: any) {
-    alert(err.message);
+    showToast(err.message, 'error');
   } finally {
     aiConfigLoading.value = false;
   }
@@ -446,8 +550,9 @@ const handleCreateApiKey = async () => {
 
     newKeyName.value = '';
     await fetchApiKeys();
+    showToast('Chave de API gerada com sucesso!', 'success');
   } catch (err: any) {
-    alert(err.message);
+    showToast(err.message, 'error');
   } finally {
     creatingKey.value = false;
   }
@@ -455,17 +560,26 @@ const handleCreateApiKey = async () => {
 
 // API Keys: Excluir/Revogar
 const handleDeleteApiKey = async (id: string) => {
-  if (!confirm('Deseja revogar esta chave de API definitivamente?')) return;
-  try {
-    const res = await fetch(`${API_BASE}/tenant/api-keys/${id}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-    });
-    if (!res.ok) throw new Error('Erro ao revogar chave.');
-    await fetchApiKeys();
-  } catch (err: any) {
-    alert(err.message);
-  }
+  showConfirm({
+    title: 'Revogar Chave de API',
+    message:
+      'Deseja revogar esta chave de API definitivamente? Qualquer aplicativo em produção usando essa chave perderá o acesso.',
+    confirmText: 'Revogar Chave',
+    isDanger: true,
+    onConfirm: async () => {
+      try {
+        const res = await fetch(`${API_BASE}/tenant/api-keys/${id}`, {
+          method: 'DELETE',
+          headers: getHeaders(),
+        });
+        if (!res.ok) throw new Error('Erro ao revogar chave.');
+        await fetchApiKeys();
+        showToast('Chave de API revogada com sucesso.', 'success');
+      } catch (err: any) {
+        showToast(err.message, 'error');
+      }
+    },
+  });
 };
 
 // Histórico e Logs: Carregar
@@ -1091,9 +1205,9 @@ onUnmounted(() => {
             <div class="form-group">
               <label class="form-label" for="ai-provider">Provedor de LLM</label>
               <select id="ai-provider" v-model="aiConfig.aiProvider" class="form-input">
+                <option value="ollama">Ollama (Servidor de IA Local)</option>
                 <option value="gemini">Google Gemini (Nativo / Default)</option>
                 <option value="openai">OpenAI (ou Provedor Compatível)</option>
-                <option value="ollama">Ollama (Servidor de IA Local)</option>
               </select>
             </div>
 
@@ -1358,6 +1472,97 @@ onUnmounted(() => {
         </div>
       </main>
     </div>
+
+    <!-- Container de Toasts (Notificações Flutuantes) -->
+    <div class="toast-container">
+      <div
+        v-for="toast in toasts"
+        :key="toast.id"
+        class="toast-item"
+        :class="'toast-' + toast.type"
+      >
+        <span class="toast-icon">
+          <svg
+            v-if="toast.type === 'success'"
+            width="16"
+            height="16"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <svg
+            v-else-if="toast.type === 'error'"
+            width="16"
+            height="16"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd"
+            />
+          </svg>
+          <svg v-else width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </span>
+        <span class="toast-message">{{ toast.message }}</span>
+      </div>
+    </div>
+
+    <!-- Modal de Confirmação Customizado -->
+    <div v-if="confirmModal.visible" class="modal-overlay" @click.self="confirmModal.onCancel">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>{{ confirmModal.title }}</h3>
+          <button class="modal-close-btn" @click="confirmModal.onCancel">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>{{ confirmModal.message }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" style="width: auto" @click="confirmModal.onCancel">
+            {{ confirmModal.cancelText }}
+          </button>
+          <button
+            class="btn"
+            :class="confirmModal.isDanger ? 'btn-danger' : 'btn-primary'"
+            style="width: auto"
+            @click="confirmModal.onConfirm"
+          >
+            {{ confirmModal.confirmText }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Alerta Customizado -->
+    <div v-if="alertModal.visible" class="modal-overlay" @click.self="alertModal.onClose">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>{{ alertModal.title }}</h3>
+          <button class="modal-close-btn" @click="alertModal.onClose">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>{{ alertModal.message }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" style="width: auto" @click="alertModal.onClose">
+            {{ alertModal.buttonText }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -1558,5 +1763,154 @@ onUnmounted(() => {
   color: var(--text-muted);
   font-size: 0.85rem;
   padding: 2rem 0;
+}
+
+/* Custom Toasts & Modals UI */
+.toast-container {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 9999;
+}
+
+.toast-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  border-radius: 8px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 280px;
+  max-width: 420px;
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-success {
+  border-left: 4px solid var(--status-connected);
+}
+.toast-success .toast-icon {
+  color: var(--status-connected);
+}
+
+.toast-error {
+  border-left: 4px solid var(--status-disconnected);
+}
+.toast-error .toast-icon {
+  color: var(--status-disconnected);
+}
+
+.toast-info {
+  border-left: 4px solid var(--primary-color);
+}
+.toast-info .toast-icon {
+  color: var(--primary-color);
+}
+
+/* Modals Overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  padding: 1.5rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 480px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  animation: scaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.modal-close-btn:hover {
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background-color: var(--bg-hover);
+  border-top: 1px solid var(--border-color);
 }
 </style>
