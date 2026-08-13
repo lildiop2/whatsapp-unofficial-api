@@ -73,7 +73,7 @@ services:
         condition: on-failure
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.api.rule=Host(`api.zap.local`)"
+        - "traefik.http.routers.api.rule=Host(\`${API_HOST:-api.zap.local}\`)"
         - "traefik.http.routers.api.entrypoints=web"
         - "traefik.http.services.api.loadbalancer.server.port=3000"
 
@@ -108,7 +108,7 @@ services:
         condition: on-failure
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.dashboard.rule=Host(`dashboard.zap.local`)"
+        - "traefik.http.routers.dashboard.rule=Host(\`${DASHBOARD_HOST:-dashboard.zap.local}\`)"
         - "traefik.http.routers.dashboard.entrypoints=web"
         - "traefik.http.services.dashboard.loadbalancer.server.port=80"
 

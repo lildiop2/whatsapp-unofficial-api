@@ -36,7 +36,7 @@ interface WebhookLog {
 }
 
 // Configurações do Servidor
-const API_BASE = 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
 // Estados de Autenticação
 const token = ref<string | null>(localStorage.getItem('token'));
