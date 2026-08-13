@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { prisma } from '../services/prisma.service.js';
 import { TenantRequest } from '../types/index.js';
+import { tenantLocalStorage } from '../services/tenant-context.service.js';
 
 export const authenticateApiKey = async (req: TenantRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
@@ -37,7 +38,9 @@ export const authenticateApiKey = async (req: TenantRequest, res: Response, next
     req.tenantId = apiKeyRecord.tenantId;
     req.tenant = apiKeyRecord.tenant;
 
-    return next();
+    return tenantLocalStorage.run({ tenantId: apiKeyRecord.tenantId }, () => {
+      next();
+    });
   } catch (err: any) {
     return res.status(500).json({ error: 'Erro interno ao validar chave de API.' });
   }
