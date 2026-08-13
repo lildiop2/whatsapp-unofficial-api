@@ -33,7 +33,7 @@ class RagService {
       const tenant = session?.tenant;
 
       // Determinar provedor
-      const aiProvider = (tenant?.aiProvider || process.env.AI_PROVIDER || 'gemini') as
+      const aiProvider = (tenant?.aiProvider || process.env.AI_PROVIDER || 'ollama') as
         'gemini' | 'openai' | 'ollama';
 
       // Carregar chaves correspondentes
@@ -60,7 +60,7 @@ class RagService {
         `Erro ao obter configurações de IA para sessão ${sessionId}. Usando padrões globais.`,
       );
       return {
-        aiProvider: (process.env.AI_PROVIDER || 'gemini') as any,
+        aiProvider: (process.env.AI_PROVIDER || 'ollama') as any,
         aiApiKey:
           process.env.AI_PROVIDER === 'gemini'
             ? process.env.GEMINI_API_KEY
@@ -110,8 +110,9 @@ class RagService {
         return await embeddings.embedQuery(text);
       } else if (config.aiProvider === 'ollama') {
         const baseURL = config.aiBaseUrl || 'http://localhost:11434/v1';
+        const apiKey = config.aiApiKey || 'ollama';
         const embeddings = new OpenAIEmbeddings({
-          openAIApiKey: 'ollama',
+          openAIApiKey: apiKey,
           configuration: {
             baseURL,
           },
@@ -270,8 +271,9 @@ Resposta do Assistente:
           ).trim();
         } else if (config.aiProvider === 'ollama') {
           const baseURL = config.aiBaseUrl || 'http://localhost:11434/v1';
+          const apiKey = config.aiApiKey || 'ollama';
           const chat = new ChatOpenAI({
-            openAIApiKey: 'ollama',
+            openAIApiKey: apiKey,
             configuration: {
               baseURL,
             },

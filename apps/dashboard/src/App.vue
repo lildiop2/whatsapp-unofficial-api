@@ -84,7 +84,7 @@ const testMessage = ref({
 
 // Estados de Configuração de IA
 const aiConfig = ref({
-  aiProvider: 'gemini',
+  aiProvider: 'ollama',
   aiApiKey: '',
   aiBaseUrl: '',
   aiChatModel: '',
@@ -1098,14 +1098,16 @@ onUnmounted(() => {
             </div>
 
             <!-- Campos Condicionais baseados no provedor -->
-            <div v-if="aiConfig.aiProvider !== 'ollama'" class="form-group">
-              <label class="form-label" for="ai-api-key">Chave de API (API Key)</label>
+            <div class="form-group">
+              <label class="form-label" for="ai-api-key"
+                >Chave de API / Token de Acesso (API Key)</label
+              >
               <input
                 id="ai-api-key"
                 v-model="aiConfig.aiApiKey"
                 type="password"
                 class="form-input"
-                placeholder="Insira sua chave de API privada (deixe em branco para usar o padrão do SaaS)"
+                placeholder="Chave de API (Opcional - Requerido se usar OpenAI/Gemini ou Ollama-cloud/remoto autenticado)"
               />
               <span class="form-help"
                 >Seu token é armazenado com criptografia segura no banco de dados.</span

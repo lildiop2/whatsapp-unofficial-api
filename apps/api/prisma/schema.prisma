@@ -20,7 +20,7 @@ enum SessionStatus {
 model Tenant {
   id               String            @id @default(uuid())
   name             String
-  aiProvider       String            @default("gemini")
+  aiProvider       String            @default("ollama")
   aiApiKey         String?
   aiBaseUrl        String?
   aiChatModel      String?
