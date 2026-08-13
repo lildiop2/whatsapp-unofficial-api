@@ -13,6 +13,7 @@ export const envSchema = z.object({
   AI_BASE_URL: z.string().optional(),
   AI_CHAT_MODEL: z.string().optional(),
   AI_EMBEDDING_MODEL: z.string().optional(),
+  JWT_SECRET: z.string().default('zapzap_super_secret_jwt_token_key_999'),
 });
 
 export type Env = z.infer<typeof envSchema>;

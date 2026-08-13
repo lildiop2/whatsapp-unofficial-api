@@ -12,9 +12,10 @@ const logger = pino({
 
 import sessionRoutes from './routes/session.routes.js';
 import messageRoutes from './routes/message.routes.js';
+import authRoutes from './routes/auth.routes.js';
 import { zapoSessionManager } from './services/zapo.service.js';
 import { queueService } from './services/queue.service.js';
-import { authenticateApiKey } from './middlewares/auth.middleware.js';
+import { authenticateHybrid } from './middlewares/auth.middleware.js';
 
 import cors from 'cors';
 
@@ -47,8 +48,9 @@ app.use(
 app.use(express.json());
 
 // Rotas da API
-app.use('/sessions', authenticateApiKey, sessionRoutes);
-app.use('/messages', authenticateApiKey, messageRoutes);
+app.use('/auth', authRoutes);
+app.use('/sessions', authenticateHybrid, sessionRoutes);
+app.use('/messages', authenticateHybrid, messageRoutes);
 
 app.get('/health', (req, res) => {
   const status: SessionStatus = 'DISCONNECTED';
