@@ -98,6 +98,26 @@ const filteredSessions = computed(() => {
     return matchesSearch && matchesStatus;
   });
 });
+
+const viewMode = ref<'split' | 'grid'>('split');
+const copiedId = ref<string | null>(null);
+
+const copyToClipboard = async (text: string, id: string) => {
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    copiedId.value = id;
+    showToast('Copiado para a área de transferência!', 'success');
+    setTimeout(() => {
+      if (copiedId.value === id) {
+        copiedId.value = null;
+      }
+    }, 2000);
+  } catch (err) {
+    showToast('Falha ao copiar texto.', 'error');
+  }
+};
+
 const newSession = ref({
   id: '',
   name: '',
@@ -388,6 +408,12 @@ const selectSession = (id: string) => {
   }
   fetchSessionStatus(id);
   testMessage.value = { to: '', text: '', sending: false, status: null, message: '' };
+};
+
+// Instâncias: Selecionar e mudar para visualização de detalhes (split view)
+const selectSessionAndSwitch = (id: string) => {
+  selectSession(id);
+  viewMode.value = 'split';
 };
 
 // Instâncias: Criar
@@ -899,132 +925,185 @@ onUnmounted(() => {
 
       <!-- Área de Conteúdo Principal -->
       <main>
-        <!-- ABA: INSTÂNCIAS (WhatsApp Sessions) -->
-        <div v-if="activeTab === 'sessions'" class="tab-content-grid">
-          <!-- Coluna Lateral: Cadastro e Lista -->
-          <div class="sub-sidebar">
-            <!-- Cadastro -->
-            <div class="card">
-              <h2 class="card-title">Nova Instância</h2>
-              <form @submit.prevent="handleCreateSession">
-                <div class="form-group">
-                  <label class="form-label" for="session-name">Nome da Instância</label>
-                  <input id="session-name" v-model="newSession.name" type="text" class="form-input"
-                    placeholder="Ex: Suporte de TI" required />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="session-id">ID Customizado (Opcional)</label>
-                  <input id="session-id" v-model="newSession.id" type="text" class="form-input"
-                    placeholder="Auto-gerado se vazio" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="session-webhook">Webhook URL (Opcional)</label>
-                  <input id="session-webhook" v-model="newSession.webhookUrl" type="url" class="form-input"
-                    placeholder="https://exemplo.com/callback" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label" for="connection-mode">Método de Conexão</label>
-                  <select id="connection-mode" v-model="connectionMode" class="form-input">
-                    <option value="qr">QR Code (Escaneamento)</option>
-                    <option value="pairing">Pairing Code (Número de Telefone)</option>
-                  </select>
-                </div>
-                <div v-if="connectionMode === 'pairing'" class="form-group">
-                  <label class="form-label" for="pairing-phone">Telefone (com DDI e DDD, apenas números)</label>
-                  <input id="pairing-phone" v-model="pairingPhone" type="text" class="form-input"
-                    placeholder="Ex: 5511999999999" required />
-                </div>
-                <button type="submit" class="btn btn-primary" :disabled="creatingSession">
-                  {{ creatingSession ? 'Criando...' : 'Criar Instância' }}
-                </button>
-              </form>
-            </div>
-
-            <!-- Lista de Conexões -->
-            <div class="card">
-              <h2 class="card-title">Instâncias WhatsApp</h2>
-              
-              <div v-if="sessions.length === 0" style="
-                  color: var(--text-muted);
-                  font-size: 0.85rem;
-                  text-align: center;
-                  padding: 1rem 0;
-                ">
-                Nenhuma instância cadastrada.
+        <div v-if="activeTab === 'sessions'">
+          <!-- Menu Superior de Visualização e Grid Switcher -->
+          <div style="background-color: var(--bg-card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+              <div>
+                <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary-color);">
+                    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                    <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                    <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                  </svg>
+                  Gerenciador de Instâncias
+                </h2>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.15rem;">Crie, pareie e monitore conexões do WhatsApp e robôs auto-respondedores.</p>
               </div>
               
-              <div v-else style="display: flex; flex-direction: column; gap: 1rem;">
-                <!-- Filtros e Busca -->
-                <div style="display: flex; flex-direction: column; gap: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 0.5rem;">
-                  <div style="position: relative; display: flex; align-items: center; width: 100%;">
-                    <input 
-                      v-model="searchQuery" 
-                      type="text" 
-                      class="form-input" 
-                      placeholder="Buscar por nome, ID ou telefone..." 
-                      style="margin-bottom: 0; padding-left: 2.25rem; font-size: 0.85rem; height: 38px; width: 100%;"
-                    />
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 0.85rem; color: var(--text-muted); pointer-events: none;">
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                  </div>
-                  
-                  <div style="display: flex; gap: 0.35rem; overflow-x: auto; padding-bottom: 0.25rem; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
-                    <button 
-                      type="button"
-                      class="btn"
-                      :class="statusFilter === 'all' ? 'btn-primary' : 'btn-secondary'"
-                      style="font-size: 0.7rem; padding: 0.3rem 0.6rem; width: auto; min-width: auto; height: 28px; line-height: 1; border-radius: 6px; white-space: nowrap;"
-                      @click="statusFilter = 'all'"
-                    >
-                      Todas ({{ sessions.length }})
-                    </button>
-                    <button 
-                      type="button"
-                      class="btn"
-                      :class="statusFilter === 'CONNECTED' ? 'btn-primary' : 'btn-secondary'"
-                      style="font-size: 0.7rem; padding: 0.3rem 0.6rem; width: auto; min-width: auto; height: 28px; line-height: 1; border-radius: 6px; white-space: nowrap;"
-                      @click="statusFilter = 'CONNECTED'"
-                    >
-                      Conectadas ({{ sessions.filter(s => s.status === 'CONNECTED').length }})
-                    </button>
-                    <button 
-                      type="button"
-                      class="btn"
-                      :class="statusFilter === 'PAIRING_REQUIRED' ? 'btn-primary' : 'btn-secondary'"
-                      style="font-size: 0.7rem; padding: 0.3rem 0.6rem; width: auto; min-width: auto; height: 28px; line-height: 1; border-radius: 6px; white-space: nowrap;"
-                      @click="statusFilter = 'PAIRING_REQUIRED'"
-                    >
-                      Parear ({{ sessions.filter(s => s.status === 'PAIRING_REQUIRED').length }})
-                    </button>
-                    <button 
-                      type="button"
-                      class="btn"
-                      :class="statusFilter === 'DISCONNECTED' ? 'btn-primary' : 'btn-secondary'"
-                      style="font-size: 0.7rem; padding: 0.3rem 0.6rem; width: auto; min-width: auto; height: 28px; line-height: 1; border-radius: 6px; white-space: nowrap;"
-                      @click="statusFilter = 'DISCONNECTED'"
-                    >
-                      Off ({{ sessions.filter(s => s.status === 'DISCONNECTED' || s.status === 'CONNECTING').length }})
-                    </button>
-                  </div>
-                </div>
+              <div style="display: flex; gap: 0.25rem; background-color: var(--bg-app); border: 1px solid var(--border); padding: 0.25rem; border-radius: 8px;">
+                <button 
+                  type="button" 
+                  class="btn"
+                  :class="viewMode === 'split' ? 'btn-primary' : 'btn-secondary'"
+                  style="font-size: 0.75rem; padding: 0.35rem 0.75rem; width: auto; height: 32px; border: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem; line-height: 1;"
+                  @click="viewMode = 'split'"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="9" y1="3" x2="9" y2="21"></line>
+                  </svg>
+                  Painel Lateral
+                </button>
+                <button 
+                  type="button" 
+                  class="btn"
+                  :class="viewMode === 'grid' ? 'btn-primary' : 'btn-secondary'"
+                  style="font-size: 0.75rem; padding: 0.35rem 0.75rem; width: auto; height: 32px; border: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem; line-height: 1;"
+                  @click="viewMode = 'grid'"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                  </svg>
+                  Grade Expandida
+                </button>
+              </div>
+            </div>
 
-                <div v-if="filteredSessions.length === 0" style="
+            <!-- Filtros Globais (Busca + Status) -->
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-top: 0.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+              <div style="position: relative; display: flex; align-items: center; flex: 1; min-width: 260px;">
+                <input 
+                  v-model="searchQuery" 
+                  type="text" 
+                  class="form-input" 
+                  placeholder="Buscar por nome, ID ou telefone..." 
+                  style="margin-bottom: 0; padding-left: 2.25rem; font-size: 0.85rem; height: 38px; width: 100%;"
+                />
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 0.85rem; color: var(--text-muted); pointer-events: none;">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </div>
+              
+              <div style="display: flex; gap: 0.35rem; overflow-x: auto; padding-bottom: 0.25rem; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                <button 
+                  type="button"
+                  class="btn"
+                  :class="statusFilter === 'all' ? 'btn-primary' : 'btn-secondary'"
+                  style="font-size: 0.7rem; padding: 0.35rem 0.65rem; width: auto; min-width: auto; height: 32px; border-radius: 6px;"
+                  @click="statusFilter = 'all'"
+                >
+                  Todas ({{ sessions.length }})
+                </button>
+                <button 
+                  type="button"
+                  class="btn"
+                  :class="statusFilter === 'CONNECTED' ? 'btn-primary' : 'btn-secondary'"
+                  style="font-size: 0.7rem; padding: 0.35rem 0.65rem; width: auto; min-width: auto; height: 32px; border-radius: 6px;"
+                  @click="statusFilter = 'CONNECTED'"
+                >
+                  Conectadas ({{ sessions.filter(s => s.status === 'CONNECTED').length }})
+                </button>
+                <button 
+                  type="button"
+                  class="btn"
+                  :class="statusFilter === 'PAIRING_REQUIRED' ? 'btn-primary' : 'btn-secondary'"
+                  style="font-size: 0.7rem; padding: 0.35rem 0.65rem; width: auto; min-width: auto; height: 32px; border-radius: 6px;"
+                  @click="statusFilter = 'PAIRING_REQUIRED'"
+                >
+                  Parear ({{ sessions.filter(s => s.status === 'PAIRING_REQUIRED').length }})
+                </button>
+                <button 
+                  type="button"
+                  class="btn"
+                  :class="statusFilter === 'DISCONNECTED' ? 'btn-primary' : 'btn-secondary'"
+                  style="font-size: 0.7rem; padding: 0.35rem 0.65rem; width: auto; min-width: auto; height: 32px; border-radius: 6px;"
+                  @click="statusFilter = 'DISCONNECTED'"
+                >
+                  Off ({{ sessions.filter(s => s.status === 'DISCONNECTED' || s.status === 'CONNECTING').length }})
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODO SPLIT VIEW (Visualização de Lista e Detalhes) -->
+          <div v-if="viewMode === 'split'" class="tab-content-grid">
+            <!-- Coluna Lateral: Cadastro e Lista -->
+            <div class="sub-sidebar">
+              <!-- Cadastro -->
+              <div class="card">
+                <h2 class="card-title">Nova Instância</h2>
+                <form @submit.prevent="handleCreateSession">
+                  <div class="form-group">
+                    <label class="form-label" for="session-name">Nome da Instância</label>
+                    <input id="session-name" v-model="newSession.name" type="text" class="form-input"
+                      placeholder="Ex: Suporte de TI" required />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="session-id">ID Customizado (Opcional)</label>
+                    <input id="session-id" v-model="newSession.id" type="text" class="form-input"
+                      placeholder="Auto-gerado se vazio" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="session-webhook">Webhook URL (Opcional)</label>
+                    <input id="session-webhook" v-model="newSession.webhookUrl" type="url" class="form-input"
+                      placeholder="https://exemplo.com/callback" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="connection-mode">Método de Conexão</label>
+                    <select id="connection-mode" v-model="connectionMode" class="form-input">
+                      <option value="qr">QR Code (Escaneamento)</option>
+                      <option value="pairing">Pairing Code (Número de Telefone)</option>
+                    </select>
+                  </div>
+                  <div v-if="connectionMode === 'pairing'" class="form-group">
+                    <label class="form-label" for="pairing-phone">Telefone (com DDI e DDD, apenas números)</label>
+                    <input id="pairing-phone" v-model="pairingPhone" type="text" class="form-input"
+                      placeholder="Ex: 5511999999999" required />
+                  </div>
+                  <button type="submit" class="btn btn-primary" :disabled="creatingSession">
+                    {{ creatingSession ? 'Criando...' : 'Criar Instância' }}
+                  </button>
+                </form>
+              </div>
+
+              <!-- Lista de Conexões -->
+              <div class="card">
+                <h2 class="card-title">Instâncias WhatsApp</h2>
+                
+                <div v-if="sessions.length === 0" style="
+                    color: var(--text-muted);
+                    font-size: 0.85rem;
+                    text-align: center;
+                    padding: 1rem 0;
+                  ">
+                  Nenhuma instância cadastrada.
+                </div>
+                
+                <div v-else-if="filteredSessions.length === 0" style="
                     color: var(--text-muted);
                     font-size: 0.85rem;
                     text-align: center;
                     padding: 2rem 0;
                   ">
-                  Nenhuma instância correspondente encontrada.
+                  Nenhuma instância correspondente.
                 </div>
                 
                 <div v-else class="sessions-list" style="max-height: 480px; overflow-y: auto; padding-right: 0.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
                   <div v-for="session in filteredSessions" :key="session.id" class="session-item"
                     :class="{ active: selectedSessionId === session.id }" @click="selectSession(session.id)">
-                    <div class="session-item-info">
-                      <h3>{{ session.name }}</h3>
-                      <p>{{ session.id.slice(0, 8) }}...</p>
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                      <!-- Pulse Indicator -->
+                      <span class="status-dot" :class="session.status.toLowerCase()"></span>
+                      <div class="session-item-info">
+                        <h3>{{ session.name }}</h3>
+                        <p>{{ session.id.slice(0, 8) }}...</p>
+                      </div>
                     </div>
                     <span class="badge" :class="{
                       'badge-connected': session.status === 'CONNECTED',
@@ -1038,35 +1117,44 @@ onUnmounted(() => {
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Coluna Direita: Detalhes -->
-          <div class="detail-pane">
-            <div v-if="!selectedSession" class="detail-view-empty">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48L4.5 19.5l2.67-.89A9.37 9.37 0 0012 20.25z" />
-              </svg>
-              <h3>Nenhuma instância selecionada</h3>
-              <p>
-                Selecione uma instância lateral para visualizar informações de pareamento, QR Code e
-                enviar mensagens.
-              </p>
-            </div>
+            <!-- Coluna Direita: Detalhes -->
+            <div class="detail-pane">
+              <div v-if="!selectedSession" class="detail-view-empty">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48L4.5 19.5l2.67-.89A9.37 9.37 0 0012 20.25z" />
+                </svg>
+                <h3>Nenhuma instância selecionada</h3>
+                <p>
+                  Selecione uma instância lateral para visualizar informações de pareamento, QR Code e
+                  enviar mensagens.
+                </p>
+              </div>
 
-            <div v-else class="card">
-              <div class="session-detail-header">
-                <div>
-                  <h2>{{ selectedSession.name }}</h2>
-                  <p style="
-                      font-family: var(--font-mono);
-                      font-size: 0.8rem;
-                      color: var(--text-muted);
-                      margin-top: 0.25rem;
-                    ">
-                    ID: {{ selectedSession.id }}
-                  </p>
-                </div>
+              <div v-else class="card">
+                <div class="session-detail-header">
+                  <div>
+                    <h2>{{ selectedSession.name }}</h2>
+                    <p style="
+                        font-family: var(--font-mono);
+                        font-size: 0.8rem;
+                        color: var(--text-muted);
+                        margin-top: 0.25rem;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.35rem;
+                      ">
+                      ID: {{ selectedSession.id }}
+                      <button type="button" @click="copyToClipboard(selectedSession.id, 'id-' + selectedSession.id)" style="background: none; border: none; padding: 0.15rem; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center;" title="Copiar ID">
+                        <svg v-if="copiedId !== 'id-' + selectedSession.id" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span v-else style="font-size: 0.65rem; color: var(--status-connected)">Copiado!</span>
+                      </button>
+                    </p>
+                  </div>
                 <span class="badge" :class="{
                   'badge-connected': selectedSession.status === 'CONNECTED',
                   'badge-pairing': selectedSession.status === 'PAIRING_REQUIRED',
@@ -1110,10 +1198,17 @@ onUnmounted(() => {
               <div v-if="selectedSession.status === 'PAIRING_REQUIRED'" class="qr-container">
                 <!-- Se for pairing code -->
                 <div v-if="selectedSession.pairingCode || selectedSession.phone" style="width: 100%;">
-                  <div v-if="selectedSession.pairingCode" class="pairing-code-box" style="margin-top: 1rem; margin-bottom: 2rem; text-align: center; background-color: var(--bg-hover); border: 1px dashed var(--border-color); padding: 1.5rem; border-radius: 12px;">
+                  <div v-if="selectedSession.pairingCode" class="pairing-code-box" style="margin-top: 1rem; margin-bottom: 2rem; text-align: center; background-color: var(--bg-hover); border: 1px dashed var(--border-color); padding: 1.5rem; border-radius: 12px; position: relative;">
                     <h3 style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 600;">Código de Pareamento (Pairing Code)</h3>
-                    <div style="font-family: var(--font-mono); font-size: 2.25rem; font-weight: 700; letter-spacing: 4px; color: var(--primary-color);">
+                    <div style="font-family: var(--font-mono); font-size: 2.25rem; font-weight: 700; letter-spacing: 4px; color: var(--primary-color); display: flex; align-items: center; justify-content: center; gap: 0.75rem;">
                       {{ selectedSession.pairingCode }}
+                      <button type="button" @click="copyToClipboard(selectedSession.pairingCode, 'pairing-code')" style="background: none; border: none; padding: 0.25rem; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center;" title="Copiar código">
+                        <svg v-if="copiedId !== 'pairing-code'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span v-else style="font-size: 0.75rem; color: var(--status-connected); font-weight: 600; letter-spacing: normal;">Copiado!</span>
+                      </button>
                     </div>
                     <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem; max-width: 340px; margin-inline: auto;">
                       Insira este código na notificação do seu celular (ou em "Aparelhos Conectados" > "Conectar com número de telefone").
@@ -1263,6 +1358,90 @@ onUnmounted(() => {
                     {{ testMessage.sending ? 'Enviando...' : 'Enviar Mensagem' }}
                   </button>
                 </form>
+              </div>
+            </div>
+          </div>
+          
+          <!-- MODO GRID VIEW (Visualização em Grade de Alta Densidade) -->
+          <div v-else>
+            <div v-if="filteredSessions.length === 0" style="
+                background-color: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                text-align: center;
+                color: var(--text-muted);
+                padding: 4rem 2rem;
+              ">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; color: var(--text-muted); display: inline-block;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48L4.5 19.5l2.67-.89A9.37 9.37 0 0012 20.25z" />
+              </svg>
+              <h3>Nenhuma instância encontrada</h3>
+              <p style="margin-top: 0.5rem; font-size: 0.9rem;">Tente ajustar seus filtros de busca ou status no painel superior.</p>
+            </div>
+            
+            <div v-else style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; align-items: start;">
+              <!-- Card de cada Instância na Grade -->
+              <div v-for="session in filteredSessions" :key="session.id" class="card" 
+                :style="{
+                  borderColor: selectedSessionId === session.id ? 'var(--accent)' : 'var(--border)',
+                  cursor: 'pointer'
+                }"
+                @click="selectSessionAndSwitch(session.id)"
+              >
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                  <div>
+                    <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">{{ session.name }}</h3>
+                    <div style="display: flex; align-items: center; gap: 0.25rem; margin-top: 0.25rem;">
+                      <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">ID: {{ session.id.slice(0, 8) }}...</span>
+                      <button type="button" @click.stop="copyToClipboard(session.id, 'id-' + session.id)" style="background: none; border: none; padding: 0.15rem; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center;">
+                        <svg v-if="copiedId !== 'id-' + session.id" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span v-else style="font-size: 0.65rem; color: var(--status-connected)">Copiado!</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <!-- Pulsing Status Ring -->
+                  <div style="display: flex; align-items: center; gap: 0.5rem; background-color: var(--bg-app); border: 1px solid var(--border); padding: 0.35rem 0.65rem; border-radius: 20px;">
+                    <span class="status-dot" :class="session.status.toLowerCase()"></span>
+                    <span style="font-size: 0.75rem; font-weight: 600;">{{ getStatusLabel(session.status) }}</span>
+                  </div>
+                </div>
+
+                <!-- Detalhes Rápidos -->
+                <div style="background-color: var(--bg-app); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Número:</span>
+                    <span style="font-weight: 500; font-family: var(--font-mono);">{{ session.phone || '(Não pareado)' }}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Auto-Resposta:</span>
+                    <span :style="{ color: session.botEnabled ? 'var(--status-connected)' : 'var(--text-muted)' }" style="font-weight: 600;">
+                      {{ session.botEnabled ? 'Ativado' : 'Desativado' }}
+                    </span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Filtros Webhook:</span>
+                    <span style="font-weight: 500; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" :title="session.webhookEvents ? session.webhookEvents.join(', ') : 'all'">
+                      {{ session.webhookEvents ? session.webhookEvents.join(', ') : 'all' }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Ações Rápidas (Grid view) -->
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                  <button type="button" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; width: auto; height: 32px;" @click.stop="selectSessionAndSwitch(session.id)">
+                    Gerenciar
+                  </button>
+                  <button v-if="session.status === 'CONNECTED'" type="button" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; width: auto; height: 32px; color: var(--status-disconnected); borderColor: hsla(0, 84%, 60%, 0.2);" @click.stop="handleDisconnect(session.id)">
+                    Desconectar
+                  </button>
+                  <button type="button" class="btn btn-danger" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; width: auto; height: 32px;" @click.stop="handleSessionLogout(session.id)">
+                    Resetar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1559,6 +1738,82 @@ onUnmounted(() => {
 </template>
 
 <style>
+/* Pulsing Indicators */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.status-dot.connected {
+  background-color: var(--status-connected);
+  box-shadow: 0 0 0 0 hsla(142, 70%, 45%, 0.6);
+  animation: pulse-green 2s infinite;
+}
+
+.status-dot.pairing_required {
+  background-color: var(--status-pairing);
+  box-shadow: 0 0 0 0 hsla(35, 92%, 50%, 0.6);
+  animation: pulse-yellow 2s infinite;
+}
+
+.status-dot.connecting {
+  background-color: var(--status-connecting);
+  box-shadow: 0 0 0 0 hsla(48, 96%, 53%, 0.6);
+  animation: pulse-blue 2s infinite;
+}
+
+.status-dot.disconnected {
+  background-color: var(--text-muted);
+}
+
+@keyframes pulse-green {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 hsla(142, 70%, 45%, 0.6);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px hsla(142, 70%, 45%, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 hsla(142, 70%, 45%, 0);
+  }
+}
+
+@keyframes pulse-yellow {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 hsla(35, 92%, 50%, 0.6);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px hsla(35, 92%, 50%, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 hsla(35, 92%, 50%, 0);
+  }
+}
+
+@keyframes pulse-blue {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 hsla(48, 96%, 53%, 0.6);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px hsla(48, 96%, 53%, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 hsla(48, 96%, 53%, 0);
+  }
+}
+
 /* Estilos globais adicionais para autenticação, tabs, tabelas e logs */
 .auth-wrapper {
   min-height: 100vh;
