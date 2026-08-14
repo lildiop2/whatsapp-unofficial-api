@@ -362,7 +362,8 @@ export const swaggerDocument = {
     },
     '/messages/send': {
       post: {
-        summary: 'Enviar mensagem de texto do WhatsApp',
+        summary: 'Enviar mensagem do WhatsApp',
+        description: 'Permite enviar mensagens de texto simples, mídias baixadas automaticamente pelo servidor (imagens, vídeos, áudios, documentos, figurinhas), simular presença humana (digitando/gravando) e enviar mensagens interativas avançadas suportadas pela SDK.',
         tags: ['Mensagens'],
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         requestBody: {
@@ -371,17 +372,152 @@ export const swaggerDocument = {
             'application/json': {
               schema: {
                 type: 'object',
-                required: ['sessionId', 'to', 'text'],
+                required: ['sessionId', 'to'],
                 properties: {
-                  sessionId: { type: 'string', example: 'default-tenant-uuid' },
+                  sessionId: { 
+                    type: 'string', 
+                    description: 'ID da sessão/instância do WhatsApp',
+                    example: 'financeiro-bot' 
+                  },
                   to: {
                     type: 'string',
-                    description: 'Número do destinatário com DDI e DDD',
+                    description: 'Número de telefone do destinatário com DDI + DDD (apenas dígitos ou JID completo)',
                     example: '5511999999999',
                   },
                   text: {
                     type: 'string',
-                    example: 'Olá, esta é uma mensagem automatizada da API!',
+                    description: 'Conteúdo textual da mensagem (obrigatório se mediaUrl não for fornecido)',
+                    example: 'Olá, esta é uma mensagem de texto!',
+                  },
+                  mediaUrl: {
+                    type: 'string',
+                    format: 'uri',
+                    description: 'URL pública da mídia a ser enviada. O servidor fará o download automático antes do envio.',
+                    example: 'https://exemplo.com/imagem.png',
+                  },
+                  mediaType: {
+                    type: 'string',
+                    enum: ['image', 'video', 'audio', 'document', 'sticker'],
+                    description: 'Tipo de mídia a ser enviada',
+                    example: 'image',
+                  },
+                  fileName: {
+                    type: 'string',
+                    description: 'Nome personalizado do arquivo (apenas para documentos)',
+                    example: 'Fatura_Novembro.pdf',
+                  },
+                  caption: {
+                    type: 'string',
+                    description: 'Legenda opcional para mídias (imagens/vídeos)',
+                    example: 'Confira nosso novo produto!',
+                  },
+                  mimetype: {
+                    type: 'string',
+                    description: 'Tipo MIME do arquivo',
+                    example: 'image/png',
+                  },
+                  presenceDelay: {
+                    type: 'integer',
+                    description: 'Tempo em milissegundos para simular status de presença humana antes do envio',
+                    example: 2000,
+                  },
+                  presenceType: {
+                    type: 'string',
+                    enum: ['composing', 'recording', 'paused'],
+                    description: 'Tipo de status de presença a simular (composing = digitando, recording = gravando áudio)',
+                    example: 'composing',
+                  },
+                },
+              },
+              examples: {
+                textMessage: {
+                  summary: 'Mensagem de Texto Simples',
+                  value: {
+                    sessionId: 'financeiro-bot',
+                    to: '5511999999999',
+                    text: 'Olá, esta é uma mensagem de texto simples!',
+                  },
+                },
+                imageMessage: {
+                  summary: 'Mensagem de Imagem com Legenda',
+                  value: {
+                    sessionId: 'financeiro-bot',
+                    to: '5511999999999',
+                    mediaUrl: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809',
+                    mediaType: 'image',
+                    caption: 'Confira nosso banner promocional!',
+                    mimetype: 'image/jpeg',
+                  },
+                },
+                documentMessage: {
+                  summary: 'Mensagem de Documento (PDF)',
+                  value: {
+                    sessionId: 'financeiro-bot',
+                    to: '5511999999999',
+                    mediaUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+                    mediaType: 'document',
+                    fileName: 'Contrato_Assinado.pdf',
+                    mimetype: 'application/pdf',
+                  },
+                },
+                presenceSimulation: {
+                  summary: 'Envio Simulando Digitação Humana',
+                  value: {
+                    sessionId: 'financeiro-bot',
+                    to: '5511999999999',
+                    text: 'Olá! Desculpe a demora. Como posso ajudar?',
+                    presenceDelay: 3500,
+                    presenceType: 'composing',
+                  },
+                },
+                reactionMessage: {
+                  summary: 'Reação a Mensagem (Reaction)',
+                  value: {
+                    sessionId: 'financeiro-bot',
+                    to: '5511999999999',
+                    text: '', // Deixar vazio ou ocultar para enviar apenas a reação
+                    reaction: {
+                      type: 'reaction',
+                      emoji: '👍',
+                      target: {
+                        id: '3EB0C34B9C894A2D',
+                        fromMe: false,
+                        remoteJid: '5511999999999@s.whatsapp.net',
+                      },
+                    },
+                  },
+                },
+                pollMessage: {
+                  summary: 'Criar Enquete (Poll)',
+                  value: {
+                    sessionId: 'financeiro-bot',
+                    to: '5511999999999',
+                    poll: {
+                      type: 'poll',
+                      name: 'Qual o melhor horário para nossa reunião?',
+                      options: ['09:00', '14:00', '17:00'],
+                      selectableCount: 1,
+                    },
+                  },
+                },
+                eventMessage: {
+                  summary: 'Agendar Evento (Event)',
+                  value: {
+                    sessionId: 'financeiro-bot',
+                    to: '5511999999999',
+                    event: {
+                      type: 'event',
+                      name: 'Apresentação do Projeto',
+                      description: 'Reunião geral com a equipe de engenharia',
+                      startTime: 1786712226,
+                      endTime: 1786715826,
+                      location: {
+                        latitude: -23.55052,
+                        longitude: -46.633308,
+                        name: 'Escritório São Paulo',
+                        address: 'Av. Paulista, 1000',
+                      },
+                    },
                   },
                 },
               },
@@ -389,7 +525,23 @@ export const swaggerDocument = {
           },
         },
         responses: {
-          '200': { description: 'Mensagem enfileirada para envio.' },
+          '200': {
+            description: 'Mensagem enviada com sucesso.',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    messageId: { type: 'string', example: '3EB0C34B9C894A2D' },
+                    result: { type: 'object' },
+                  },
+                },
+              },
+            },
+          },
+          '400': { description: 'Parâmetros inválidos ou download de mídia falhou.' },
+          '444': { description: 'Sessão desconectada ou inexistente.' },
         },
       },
     },
