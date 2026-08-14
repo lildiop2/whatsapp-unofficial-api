@@ -17,10 +17,10 @@
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write \"**/*.{ts,js,json,vue,md}\" --ignore-path .gitignore && npx prisma format --schema=apps/api/prisma/schema.prisma",
-    "db:migrate": "npm run db:migrate --workspace=@zap/api",
-    "db:generate": "npm run db:generate --workspace=@zap/api",
-    "db:migrate-manual": "npx tsx apps/api/src/migrate-manual.ts",
-    "db:seed": "npx tsx apps/api/prisma/seed.ts",
+    "db:migrate": "npx prisma migrate dev --schema=apps/api/prisma/schema.prisma",
+    "db:generate": "npx prisma generate --schema=apps/api/prisma/schema.prisma",
+    "db:migrate-manual": "npx tsx --env-file=.env apps/api/src/migrate-manual.ts",
+    "db:seed": "npx tsx --env-file=.env apps/api/prisma/seed.ts",
     "db:studio": "npx prisma studio --schema=apps/api/prisma/schema.prisma"
   },
   "devDependencies": {
