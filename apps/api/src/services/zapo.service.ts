@@ -15,25 +15,28 @@ const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
   base: null,
   timestamp: false,
-  transport: process.env.NODE_ENV !== 'production' ? {
-    targets: [
-      {
-        target: 'pino-pretty',
-        options: { destination: 1 },
-        level: process.env.LOG_LEVEL || 'info',
-      },
-      {
-        target: 'pino-roll',
-        options: {
-          file: './logs/zapo',
-          frequency: 'daily',
-          size: '10m',
-          mkdir: true,
-        },
-        level: process.env.LOG_LEVEL || 'info',
-      }
-    ]
-  } : undefined,
+  transport:
+    process.env.NODE_ENV !== 'production'
+      ? {
+          targets: [
+            {
+              target: 'pino-pretty',
+              options: { destination: 1 },
+              level: process.env.LOG_LEVEL || 'info',
+            },
+            {
+              target: 'pino-roll',
+              options: {
+                file: './logs/zapo',
+                frequency: 'daily',
+                size: '10m',
+                mkdir: true,
+              },
+              level: process.env.LOG_LEVEL || 'info',
+            },
+          ],
+        }
+      : undefined,
 });
 
 class ZapoSessionManager {

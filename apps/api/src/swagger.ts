@@ -242,7 +242,8 @@ export const swaggerDocument = {
                   },
                   phone: {
                     type: 'string',
-                    description: 'Telefone para conexão via Pairing Code (se omitido, gera QR Code)',
+                    description:
+                      'Telefone para conexão via Pairing Code (se omitido, gera QR Code)',
                     example: '5511999999999',
                   },
                   webhookUrl: {
@@ -253,7 +254,8 @@ export const swaggerDocument = {
                   webhookEvents: {
                     type: 'array',
                     items: { type: 'string' },
-                    description: 'Lista de eventos que disparam o webhook (ex: ["message", "connection"] ou ["all"])',
+                    description:
+                      'Lista de eventos que disparam o webhook (ex: ["message", "connection"] ou ["all"])',
                     example: ['all'],
                   },
                   botEnabled: {
@@ -263,7 +265,8 @@ export const swaggerDocument = {
                   },
                   botConfig: {
                     type: 'object',
-                    description: 'Configuração do bot (simple para resposta baseada em palavra-chave, ai para assistente Gemini/Ollama)',
+                    description:
+                      'Configuração do bot (simple para resposta baseada em palavra-chave, ai para assistente Gemini/Ollama)',
                     example: {
                       type: 'simple',
                       rules: [
@@ -297,14 +300,25 @@ export const swaggerDocument = {
                 properties: {
                   name: { type: 'string', example: 'Suporte Principal Atualizado' },
                   phone: { type: 'string', example: '5511999999999' },
-                  webhookUrl: { type: 'string', format: 'uri', example: 'https://api.empresa.com/callback' },
-                  webhookEvents: { type: 'array', items: { type: 'string' }, example: ['message', 'connection'] },
+                  webhookUrl: {
+                    type: 'string',
+                    format: 'uri',
+                    example: 'https://api.empresa.com/callback',
+                  },
+                  webhookEvents: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    example: ['message', 'connection'],
+                  },
                   botEnabled: { type: 'boolean', example: true },
                   botConfig: {
                     type: 'object',
                     properties: {
                       type: { type: 'string', enum: ['simple', 'ai'], example: 'ai' },
-                      prompt: { type: 'string', example: 'Você é o assistente virtual de vendas...' },
+                      prompt: {
+                        type: 'string',
+                        example: 'Você é o assistente virtual de vendas...',
+                      },
                       rules: {
                         type: 'array',
                         items: {
@@ -363,7 +377,8 @@ export const swaggerDocument = {
     '/messages/send': {
       post: {
         summary: 'Enviar mensagem do WhatsApp',
-        description: 'Permite enviar mensagens de texto simples, mídias baixadas automaticamente pelo servidor (imagens, vídeos, áudios, documentos, figurinhas), simular presença humana (digitando/gravando) e enviar mensagens interativas avançadas suportadas pela SDK.',
+        description:
+          'Permite enviar mensagens de texto simples, mídias baixadas automaticamente pelo servidor (imagens, vídeos, áudios, documentos, figurinhas), simular presença humana (digitando/gravando) e enviar mensagens interativas avançadas suportadas pela SDK.',
         tags: ['Mensagens'],
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         requestBody: {
@@ -374,25 +389,28 @@ export const swaggerDocument = {
                 type: 'object',
                 required: ['sessionId', 'to'],
                 properties: {
-                  sessionId: { 
-                    type: 'string', 
+                  sessionId: {
+                    type: 'string',
                     description: 'ID da sessão/instância do WhatsApp',
-                    example: 'financeiro-bot' 
+                    example: 'financeiro-bot',
                   },
                   to: {
                     type: 'string',
-                    description: 'Número de telefone do destinatário com DDI + DDD (apenas dígitos ou JID completo)',
+                    description:
+                      'Número de telefone do destinatário com DDI + DDD (apenas dígitos ou JID completo)',
                     example: '5511999999999',
                   },
                   text: {
                     type: 'string',
-                    description: 'Conteúdo textual da mensagem (obrigatório se mediaUrl não for fornecido)',
+                    description:
+                      'Conteúdo textual da mensagem (obrigatório se mediaUrl não for fornecido)',
                     example: 'Olá, esta é uma mensagem de texto!',
                   },
                   mediaUrl: {
                     type: 'string',
                     format: 'uri',
-                    description: 'URL pública da mídia a ser enviada. O servidor fará o download automático antes do envio.',
+                    description:
+                      'URL pública da mídia a ser enviada. O servidor fará o download automático antes do envio.',
                     example: 'https://exemplo.com/imagem.png',
                   },
                   mediaType: {
@@ -418,13 +436,15 @@ export const swaggerDocument = {
                   },
                   presenceDelay: {
                     type: 'integer',
-                    description: 'Tempo em milissegundos para simular status de presença humana antes do envio',
+                    description:
+                      'Tempo em milissegundos para simular status de presença humana antes do envio',
                     example: 2000,
                   },
                   presenceType: {
                     type: 'string',
                     enum: ['composing', 'recording', 'paused'],
-                    description: 'Tipo de status de presença a simular (composing = digitando, recording = gravando áudio)',
+                    description:
+                      'Tipo de status de presença a simular (composing = digitando, recording = gravando áudio)',
                     example: 'composing',
                   },
                 },
@@ -454,7 +474,8 @@ export const swaggerDocument = {
                   value: {
                     sessionId: 'financeiro-bot',
                     to: '5511999999999',
-                    mediaUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+                    mediaUrl:
+                      'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
                     mediaType: 'document',
                     fileName: 'Contrato_Assinado.pdf',
                     mimetype: 'application/pdf',
@@ -560,16 +581,20 @@ export const swaggerDocument = {
                 required: ['subject', 'participants'],
                 properties: {
                   subject: { type: 'string', example: 'Equipe de Vendas' },
-                  participants: { type: 'array', items: { type: 'string' }, example: ['5511999999999'] },
-                  description: { type: 'string', example: 'Grupo de alinhamento diário' }
-                }
-              }
-            }
-          }
+                  participants: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    example: ['5511999999999'],
+                  },
+                  description: { type: 'string', example: 'Grupo de alinhamento diário' },
+                },
+              },
+            },
+          },
         },
         responses: {
-          '201': { description: 'Grupo criado com sucesso.' }
-        }
+          '201': { description: 'Grupo criado com sucesso.' },
+        },
       },
       get: {
         summary: 'Listar todos os grupos participando',
@@ -577,9 +602,9 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [{ name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
-          '200': { description: 'Lista de grupos retornada.' }
-        }
-      }
+          '200': { description: 'Lista de grupos retornada.' },
+        },
+      },
     },
     '/sessions/{sessionId}/groups/join': {
       post: {
@@ -595,16 +620,16 @@ export const swaggerDocument = {
                 type: 'object',
                 required: ['code'],
                 properties: {
-                  code: { type: 'string', example: 'https://chat.whatsapp.com/ExemploLinkConvite' }
-                }
-              }
-            }
-          }
+                  code: { type: 'string', example: 'https://chat.whatsapp.com/ExemploLinkConvite' },
+                },
+              },
+            },
+          },
         },
         responses: {
-          '200': { description: 'Entrou no grupo com sucesso.' }
-        }
-      }
+          '200': { description: 'Entrou no grupo com sucesso.' },
+        },
+      },
     },
     '/sessions/{sessionId}/groups/{jid}': {
       get: {
@@ -613,11 +638,17 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' }, description: 'JID do grupo' }
+          {
+            name: 'jid',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'JID do grupo',
+          },
         ],
         responses: {
-          '200': { description: 'Dados do grupo retornados.' }
-        }
+          '200': { description: 'Dados do grupo retornados.' },
+        },
       },
       patch: {
         summary: 'Atualizar dados de um grupo (assunto/descrição)',
@@ -625,7 +656,7 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } },
         ],
         requestBody: {
           required: true,
@@ -635,16 +666,16 @@ export const swaggerDocument = {
                 type: 'object',
                 properties: {
                   subject: { type: 'string', example: 'Novo Nome do Grupo' },
-                  description: { type: 'string', example: 'Nova descrição' }
-                }
-              }
-            }
-          }
+                  description: { type: 'string', example: 'Nova descrição' },
+                },
+              },
+            },
+          },
         },
         responses: {
-          '200': { description: 'Grupo atualizado com sucesso.' }
-        }
-      }
+          '200': { description: 'Grupo atualizado com sucesso.' },
+        },
+      },
     },
     '/sessions/{sessionId}/groups/{jid}/participants': {
       post: {
@@ -653,7 +684,7 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } },
         ],
         requestBody: {
           required: true,
@@ -663,17 +694,25 @@ export const swaggerDocument = {
                 type: 'object',
                 required: ['participants', 'action'],
                 properties: {
-                  participants: { type: 'array', items: { type: 'string' }, example: ['5511999999999'] },
-                  action: { type: 'string', enum: ['add', 'remove', 'promote', 'demote'], example: 'add' }
-                }
-              }
-            }
-          }
+                  participants: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    example: ['5511999999999'],
+                  },
+                  action: {
+                    type: 'string',
+                    enum: ['add', 'remove', 'promote', 'demote'],
+                    example: 'add',
+                  },
+                },
+              },
+            },
+          },
         },
         responses: {
-          '200': { description: 'Ação executada com sucesso.' }
-        }
-      }
+          '200': { description: 'Ação executada com sucesso.' },
+        },
+      },
     },
     '/sessions/{sessionId}/groups/{jid}/leave': {
       post: {
@@ -682,12 +721,12 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } },
         ],
         responses: {
-          '200': { description: 'Saída do grupo concluída.' }
-        }
-      }
+          '200': { description: 'Saída do grupo concluída.' },
+        },
+      },
     },
     '/sessions/{sessionId}/groups/{jid}/invite': {
       get: {
@@ -696,12 +735,12 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } },
         ],
         responses: {
-          '200': { description: 'Retorna o link de convite.' }
-        }
-      }
+          '200': { description: 'Retorna o link de convite.' },
+        },
+      },
     },
     '/sessions/{sessionId}/groups/{jid}/invite/revoke': {
       post: {
@@ -710,12 +749,12 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } },
         ],
         responses: {
-          '200': { description: 'Link revogado e novo link gerado.' }
-        }
-      }
+          '200': { description: 'Link revogado e novo link gerado.' },
+        },
+      },
     },
     '/sessions/{sessionId}/newsletters': {
       post: {
@@ -732,15 +771,15 @@ export const swaggerDocument = {
                 required: ['name'],
                 properties: {
                   name: { type: 'string', example: 'Meu Canal de Ofertas' },
-                  description: { type: 'string', example: 'Promoções exclusivas todos os dias' }
-                }
-              }
-            }
-          }
+                  description: { type: 'string', example: 'Promoções exclusivas todos os dias' },
+                },
+              },
+            },
+          },
         },
         responses: {
-          '201': { description: 'Canal criado com sucesso.' }
-        }
+          '201': { description: 'Canal criado com sucesso.' },
+        },
       },
       get: {
         summary: 'Listar todos os canais inscritos/seguidos',
@@ -748,9 +787,9 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [{ name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
-          '200': { description: 'Lista de canais retornada.' }
-        }
-      }
+          '200': { description: 'Lista de canais retornada.' },
+        },
+      },
     },
     '/sessions/{sessionId}/newsletters/{jid}': {
       get: {
@@ -759,11 +798,11 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } },
         ],
         responses: {
-          '200': { description: 'Informações do canal retornadas.' }
-        }
+          '200': { description: 'Informações do canal retornadas.' },
+        },
       },
       delete: {
         summary: 'Excluir um canal permanentemente',
@@ -771,12 +810,12 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } },
         ],
         responses: {
-          '200': { description: 'Canal deletado.' }
-        }
-      }
+          '200': { description: 'Canal deletado.' },
+        },
+      },
     },
     '/sessions/{sessionId}/newsletters/{jid}/follow': {
       post: {
@@ -785,12 +824,12 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } },
         ],
         responses: {
-          '200': { description: 'Inscrição realizada.' }
-        }
-      }
+          '200': { description: 'Inscrição realizada.' },
+        },
+      },
     },
     '/sessions/{sessionId}/newsletters/{jid}/unfollow': {
       post: {
@@ -799,12 +838,12 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } },
         ],
         responses: {
-          '200': { description: 'Inscrição removida.' }
-        }
-      }
+          '200': { description: 'Inscrição removida.' },
+        },
+      },
     },
     '/sessions/{sessionId}/newsletters/{jid}/mute': {
       post: {
@@ -813,7 +852,7 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } },
         ],
         requestBody: {
           required: true,
@@ -823,16 +862,16 @@ export const swaggerDocument = {
                 type: 'object',
                 required: ['mute'],
                 properties: {
-                  mute: { type: 'boolean', example: true }
-                }
-              }
-            }
-          }
+                  mute: { type: 'boolean', example: true },
+                },
+              },
+            },
+          },
         },
         responses: {
-          '200': { description: 'Status de silêncio atualizado.' }
-        }
-      }
+          '200': { description: 'Status de silêncio atualizado.' },
+        },
+      },
     },
     '/sessions/{sessionId}/communities': {
       post: {
@@ -849,16 +888,16 @@ export const swaggerDocument = {
                 required: ['subject'],
                 properties: {
                   subject: { type: 'string', example: 'Comunidade Principal' },
-                  description: { type: 'string', example: 'Comunidade Geral' }
-                }
-              }
-            }
-          }
+                  description: { type: 'string', example: 'Comunidade Geral' },
+                },
+              },
+            },
+          },
         },
         responses: {
-          '201': { description: 'Comunidade criada com sucesso.' }
-        }
-      }
+          '201': { description: 'Comunidade criada com sucesso.' },
+        },
+      },
     },
     '/sessions/{sessionId}/communities/{jid}/link': {
       post: {
@@ -867,7 +906,13 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' }, description: 'JID da comunidade' }
+          {
+            name: 'jid',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'JID da comunidade',
+          },
         ],
         requestBody: {
           required: true,
@@ -877,16 +922,20 @@ export const swaggerDocument = {
                 type: 'object',
                 required: ['subgroupJids'],
                 properties: {
-                  subgroupJids: { type: 'array', items: { type: 'string' }, example: ['12036321123456@g.us'] }
-                }
-              }
-            }
-          }
+                  subgroupJids: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    example: ['12036321123456@g.us'],
+                  },
+                },
+              },
+            },
+          },
         },
         responses: {
-          '200': { description: 'Grupos vinculados.' }
-        }
-      }
+          '200': { description: 'Grupos vinculados.' },
+        },
+      },
     },
     '/sessions/{sessionId}/communities/{jid}/unlink': {
       post: {
@@ -895,7 +944,7 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } },
         ],
         requestBody: {
           required: true,
@@ -905,17 +954,21 @@ export const swaggerDocument = {
                 type: 'object',
                 required: ['subgroupJids'],
                 properties: {
-                  subgroupJids: { type: 'array', items: { type: 'string' }, example: ['12036321123456@g.us'] },
-                  removeOrphanedMembers: { type: 'boolean', example: true }
-                }
-              }
-            }
-          }
+                  subgroupJids: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    example: ['12036321123456@g.us'],
+                  },
+                  removeOrphanedMembers: { type: 'boolean', example: true },
+                },
+              },
+            },
+          },
         },
         responses: {
-          '200': { description: 'Grupos desvinculados.' }
-        }
-      }
+          '200': { description: 'Grupos desvinculados.' },
+        },
+      },
     },
     '/sessions/{sessionId}/communities/{jid}': {
       delete: {
@@ -924,12 +977,12 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } },
         ],
         responses: {
-          '200': { description: 'Comunidade desativada.' }
-        }
-      }
+          '200': { description: 'Comunidade desativada.' },
+        },
+      },
     },
     '/sessions/{sessionId}/contacts/check': {
       post: {
@@ -945,16 +998,16 @@ export const swaggerDocument = {
                 type: 'object',
                 required: ['numbers'],
                 properties: {
-                  numbers: { type: 'array', items: { type: 'string' }, example: ['5511999999999'] }
-                }
-              }
-            }
-          }
+                  numbers: { type: 'array', items: { type: 'string' }, example: ['5511999999999'] },
+                },
+              },
+            },
+          },
         },
         responses: {
-          '200': { description: 'Resultado da validação de números com JID LID retornada.' }
-        }
-      }
+          '200': { description: 'Resultado da validação de números com JID LID retornada.' },
+        },
+      },
     },
     '/sessions/{sessionId}/contacts/{jid}/profile': {
       get: {
@@ -963,12 +1016,12 @@ export const swaggerDocument = {
         security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
         parameters: [
           { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
-          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } },
         ],
         responses: {
-          '200': { description: 'Dados de perfil retornados.' }
-        }
-      }
+          '200': { description: 'Dados de perfil retornados.' },
+        },
+      },
     },
   },
   components: {

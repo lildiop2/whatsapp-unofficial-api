@@ -24,15 +24,20 @@ export const createGroup = async (req: TenantRequest, res: Response) => {
   const tenantId = req.tenantId!;
 
   if (!subject || !participants || !Array.isArray(participants)) {
-    return res.status(400).json({ error: 'Os campos "subject" e "participants" (array) são obrigatórios.' });
+    return res
+      .status(400)
+      .json({ error: 'Os campos "subject" e "participants" (array) são obrigatórios.' });
   }
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     // Converter números de telefone simples em JIDs
-    const formattedParticipants = participants.map(p => p.includes('@') ? p : `${p}@s.whatsapp.net`);
+    const formattedParticipants = participants.map(p =>
+      p.includes('@') ? p : `${p}@s.whatsapp.net`,
+    );
 
     const result = await client.group.createGroup(subject, formattedParticipants, { description });
     return res.status(201).json({ success: true, group: result });
@@ -47,7 +52,8 @@ export const listGroups = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const groups = await client.group.queryAllGroups();
     return res.json({ success: true, groups });
@@ -62,7 +68,8 @@ export const getGroupInfo = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const targetJid = jid.includes('@') ? jid : `${jid}@g.us`;
     const metadata = await client.group.queryGroupMetadata(targetJid);
@@ -79,7 +86,8 @@ export const updateGroup = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const targetJid = jid.includes('@') ? jid : `${jid}@g.us`;
 
@@ -102,15 +110,20 @@ export const manageParticipants = async (req: TenantRequest, res: Response) => {
   const tenantId = req.tenantId!;
 
   if (!participants || !Array.isArray(participants) || !action) {
-    return res.status(400).json({ error: 'Parâmetros "participants" (array) e "action" são obrigatórios.' });
+    return res
+      .status(400)
+      .json({ error: 'Parâmetros "participants" (array) e "action" são obrigatórios.' });
   }
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const targetJid = jid.includes('@') ? jid : `${jid}@g.us`;
-    const formattedParticipants = participants.map(p => p.includes('@') ? p : `${p}@s.whatsapp.net`);
+    const formattedParticipants = participants.map(p =>
+      p.includes('@') ? p : `${p}@s.whatsapp.net`,
+    );
 
     let result;
     switch (action) {
@@ -127,7 +140,9 @@ export const manageParticipants = async (req: TenantRequest, res: Response) => {
         result = await client.group.demoteParticipants(targetJid, formattedParticipants);
         break;
       default:
-        return res.status(400).json({ error: 'Ação inválida. Use "add", "remove", "promote" ou "demote".' });
+        return res
+          .status(400)
+          .json({ error: 'Ação inválida. Use "add", "remove", "promote" ou "demote".' });
     }
 
     return res.json({ success: true, result });
@@ -142,7 +157,8 @@ export const leaveGroup = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const targetJid = jid.includes('@') ? jid : `${jid}@g.us`;
     await client.group.leaveGroup([targetJid]);
@@ -159,7 +175,8 @@ export const getGroupInvite = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const targetJid = jid.includes('@') ? jid : `${jid}@g.us`;
     const code = await client.group.queryInviteCode(targetJid);
@@ -175,7 +192,8 @@ export const revokeGroupInvite = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const targetJid = jid.includes('@') ? jid : `${jid}@g.us`;
     const result = await client.group.revokeInvite(targetJid);
@@ -196,7 +214,8 @@ export const joinGroup = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const cleanCode = code.replace('https://chat.whatsapp.com/', '');
     const groupMetadata = await client.group.joinGroupViaInvite(cleanCode);
@@ -221,7 +240,8 @@ export const createNewsletter = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const metadata = await client.newsletter.create({ name, description });
     return res.status(201).json({ success: true, newsletter: metadata });
@@ -236,7 +256,8 @@ export const listNewsletters = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const newsletters = await client.newsletter.listSubscribed();
     return res.json({ success: true, newsletters });
@@ -251,7 +272,8 @@ export const getNewsletterInfo = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const targetJid = jid.includes('@') ? jid : `${jid}@newsletter`;
     const metadata = await client.newsletter.fetch(targetJid);
@@ -267,7 +289,8 @@ export const deleteNewsletter = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const targetJid = jid.includes('@') ? jid : `${jid}@newsletter`;
     await client.newsletter.delete(targetJid);
@@ -283,7 +306,8 @@ export const followNewsletter = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const targetJid = jid.includes('@') ? jid : `${jid}@newsletter`;
     await client.newsletter.follow(targetJid);
@@ -299,7 +323,8 @@ export const unfollowNewsletter = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const targetJid = jid.includes('@') ? jid : `${jid}@newsletter`;
     await client.newsletter.unfollow(targetJid);
@@ -320,7 +345,8 @@ export const muteNewsletter = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const targetJid = jid.includes('@') ? jid : `${jid}@newsletter`;
     await client.newsletter.mute({ newsletterJid: targetJid, mute });
@@ -345,7 +371,8 @@ export const createCommunity = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const community = await client.group.createCommunity(subject, { description });
     return res.status(201).json({ success: true, community });
@@ -365,10 +392,11 @@ export const linkSubgroups = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const communityJid = jid.includes('@') ? jid : `${jid}@g.us`;
-    const formattedSubgroups = subgroupJids.map(s => s.includes('@') ? s : `${s}@g.us`);
+    const formattedSubgroups = subgroupJids.map(s => (s.includes('@') ? s : `${s}@g.us`));
 
     const result = await client.group.linkSubGroups(communityJid, formattedSubgroups);
     return res.json({ success: true, result });
@@ -388,10 +416,11 @@ export const unlinkSubgroups = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const communityJid = jid.includes('@') ? jid : `${jid}@g.us`;
-    const formattedSubgroups = subgroupJids.map(s => s.includes('@') ? s : `${s}@g.us`);
+    const formattedSubgroups = subgroupJids.map(s => (s.includes('@') ? s : `${s}@g.us`));
 
     const result = await client.group.unlinkSubGroups(communityJid, formattedSubgroups, {
       removeOrphanedMembers,
@@ -408,7 +437,8 @@ export const deactivateCommunity = async (req: TenantRequest, res: Response) => 
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const communityJid = jid.includes('@') ? jid : `${jid}@g.us`;
     await client.group.deactivateCommunity(communityJid);
@@ -433,11 +463,12 @@ export const checkNumbers = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     // Zapo-JS resolve contatos usando getLidsByPhoneNumbers
     const results = await client.profile.getLidsByPhoneNumbers(numbers);
-    
+
     // Retornar formatado para o usuário
     const formatted = results.map(r => ({
       input: r.queriedJid,
@@ -459,14 +490,15 @@ export const getContactProfile = async (req: TenantRequest, res: Response) => {
 
   try {
     const client = await getClientForTenant(sessionId, tenantId);
-    if (!client) return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
+    if (!client)
+      return res.status(444).json({ error: 'Sessão inexistente, inativa ou sem permissão.' });
 
     const targetJid = jid.includes('@') ? jid : `${jid}@s.whatsapp.net`;
-    
+
     // Buscar foto de perfil e status/sobre em paralelo
     const [picture, statusResult, about] = await Promise.all([
-      client.profile.getProfilePicture(targetJid).catch(() => ({} as any)),
-      client.profile.getStatus(targetJid).catch(() => ({ status: null } as any)),
+      client.profile.getProfilePicture(targetJid).catch(() => ({}) as any),
+      client.profile.getStatus(targetJid).catch(() => ({ status: null }) as any),
       client.profile.getAboutStatus(targetJid).catch(() => null),
     ]);
 

@@ -1,0 +1,133 @@
+name: Build and Deploy (One-Click)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Habilita o botão "Run workflow" para deploy manual em um clique na interface do GitHub
+
+env:
+  REGISTRY: ghcr.io
+  # Registros das imagens convertidos para caixa baixa no GHCR
+  IMAGE_NAME_API: ${{ github.repository }}/api
+  IMAGE_NAME_WORKER: ${{ github.repository }}/worker
+  IMAGE_NAME_DASHBOARD: ${{ github.repository }}/dashboard
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU (para suporte multi-plataforma)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for API Image
+        id: meta-api
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_API }}
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Build and Push API Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.api.prod
+          push: true
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Extract metadata for Worker Image
+        id: meta-worker
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_WORKER }}
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Build and Push Worker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.worker.prod
+          push: true
+          tags: ${{ steps.meta-worker.outputs.tags }}
+          labels: ${{ steps.meta-worker.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Extract metadata for Dashboard Image
+        id: meta-dashboard
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_DASHBOARD }}
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Build and Push Dashboard Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.dashboard.prod
+          push: true
+          tags: ${{ steps.meta-dashboard.outputs.tags }}
+          labels: ${{ steps.meta-dashboard.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Copy Docker Compose to Production Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          source: "docker-compose.swarm.yml"
+          target: "~/zap-zap"
+
+      - name: Deploy to Docker Swarm via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key_path: ""
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            mkdir -p ~/zap-zap
+            cd ~/zap-zap
+            # Autenticar docker no GHCR para pull das imagens privadas/públicas do repositório
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # Executar deploy/atualização de serviços do Stack no Swarm
+            docker stack deploy -c docker-compose.swarm.yml zap-zap --with-registry-auth

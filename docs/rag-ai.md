@@ -7,8 +7,9 @@ O Zap-Zap possui suporte nativo para automação de atendimento em dois níveis:
 ## 🤖 1. Chatbot de Respostas Simples (Keywords)
 
 Ideal para triagem de contatos e criação de fluxos direcionados (Uras numéricas).
-* **Como funciona**: A mensagem recebida pelo WhatsApp é convertida em caixa baixa e comparada com as triggers (gatilhos) cadastradas na instância. Se houver correspondência exata, a resposta programada é enviada de volta imediatamente pelo Worker.
-* **Exemplo de Regra**:
+
+- **Como funciona**: A mensagem recebida pelo WhatsApp é convertida em caixa baixa e comparada com as triggers (gatilhos) cadastradas na instância. Se houver correspondência exata, a resposta programada é enviada de volta imediatamente pelo Worker.
+- **Exemplo de Regra**:
   ```json
   [
     { "trigger": "financeiro", "response": "Acesse nosso portal de fatura em: fatura.empresa.com" },
@@ -21,8 +22,9 @@ Ideal para triagem de contatos e criação de fluxos direcionados (Uras numéric
 ## 🧠 2. Assistente Inteligente com IA RAG (Langgraph)
 
 Para conversas complexas e naturais baseadas na base de conhecimento da empresa.
-* **Modelo RAG (Retrieval-Augmented Generation)**: Em vez de confiar exclusivamente no conhecimento estático da IA, o sistema consulta documentos indexados no banco de dados com extensão **pgvector** para encontrar informações contextuais sobre a empresa, enriquecendo o prompt enviado ao modelo de linguagem.
-* **Customização por Organização**: Cada Tenant pode definir seu próprio **System Prompt** corporativo e configurar o modelo preferido no dashboard.
+
+- **Modelo RAG (Retrieval-Augmented Generation)**: Em vez de confiar exclusivamente no conhecimento estático da IA, o sistema consulta documentos indexados no banco de dados com extensão **pgvector** para encontrar informações contextuais sobre a empresa, enriquecendo o prompt enviado ao modelo de linguagem.
+- **Customização por Organização**: Cada Tenant pode definir seu próprio **System Prompt** corporativo e configurar o modelo preferido no dashboard.
 
 ### Provedores de Modelos de Linguagem (LLMs) Suportados:
 
@@ -35,4 +37,5 @@ Para conversas complexas e naturais baseadas na base de conhecimento da empresa.
 ```text
 Mensagem Recebida ➡️ Consulta pgvector (Documentos Relacionados) ➡️ Montagem do Prompt Enriquecido ➡️ LLM (Gemini/Ollama) ➡️ Envio da Resposta ao WhatsApp
 ```
+
 O System Prompt personalizado do Tenant atua como a personalidade da IA, orientando-a a agir como suporte de vendas, assistente de TI ou recepcionista virtual.

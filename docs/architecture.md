@@ -27,10 +27,10 @@ O projeto é estruturado utilizando **NPM Workspaces** para gerenciar as depend�
 O Zap-Zap é integrado aos seguintes serviços e banco de dados externos (configurados via `.env`):
 
 1. **PostgreSQL**: Banco de dados relacional principal. Armazena dados de Tenants, usuários, chaves de API, logs de auditoria e sessões de WhatsApp.
-   * **Aviso de Migração (Zapo Table Drift)**: As sessões do WhatsApp geram tabelas dinâmicas internas com prefixo `wa_`. Por isso, novas alterações de banco de dados no Prisma devem ser aplicadas incrementalmente por scripts SQL manuais, evitando comandos agressivos como `prisma db push` que possam deletar dados temporários das conexões do WhatsApp.
+   - **Aviso de Migração (Zapo Table Drift)**: As sessões do WhatsApp geram tabelas dinâmicas internas com prefixo `wa_`. Por isso, novas alterações de banco de dados no Prisma devem ser aplicadas incrementalmente por scripts SQL manuais, evitando comandos agressivos como `prisma db push` que possam deletar dados temporários das conexões do WhatsApp.
 2. **RabbitMQ**: Message broker responsável pelo desacoplamento e processamento assíncrono de:
-   * Eventos de webhooks externos a serem enviados.
-   * Mensagens recebidas que precisam passar pelo fluxo de Inteligência Artificial.
+   - Eventos de webhooks externos a serem enviados.
+   - Mensagens recebidas que precisam passar pelo fluxo de Inteligência Artificial.
 3. **Redis**: Cache em memória de alta performance. Armazena o estado das credenciais de autenticação do Zapo e tokens de pareamento temporários.
 
 ---

@@ -86,15 +86,17 @@ const statusFilter = ref<'all' | 'CONNECTED' | 'PAIRING_REQUIRED' | 'DISCONNECTE
 
 const filteredSessions = computed(() => {
   return sessions.value.filter(session => {
-    const matchesSearch = session.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                          session.id.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                          (session.phone && session.phone.includes(searchQuery.value.trim()));
-                          
-    const matchesStatus = statusFilter.value === 'all' || 
-                          (statusFilter.value === 'DISCONNECTED' 
-                            ? (session.status === 'DISCONNECTED' || session.status === 'CONNECTING') 
-                            : session.status === statusFilter.value);
-    
+    const matchesSearch =
+      session.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      session.id.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      (session.phone && session.phone.includes(searchQuery.value.trim()));
+
+    const matchesStatus =
+      statusFilter.value === 'all' ||
+      (statusFilter.value === 'DISCONNECTED'
+        ? session.status === 'DISCONNECTED' || session.status === 'CONNECTING'
+        : session.status === statusFilter.value);
+
     return matchesSearch && matchesStatus;
   });
 });
@@ -182,8 +184,8 @@ const confirmModal = ref({
   confirmText: 'Confirmar',
   cancelText: 'Cancelar',
   isDanger: false,
-  onConfirm: () => { },
-  onCancel: () => { },
+  onConfirm: () => {},
+  onCancel: () => {},
 });
 
 const alertModal = ref({
@@ -191,7 +193,7 @@ const alertModal = ref({
   title: '',
   message: '',
   buttonText: 'Ok',
-  onClose: () => { },
+  onClose: () => {},
 });
 
 let pollInterval: ReturnType<typeof setInterval> | null = null;
@@ -449,7 +451,7 @@ const handleCreateSession = async () => {
 };
 
 // Monitorar a sessão selecionada para sincronizar inputs
-watch(selectedSession, (newVal) => {
+watch(selectedSession, newVal => {
   if (newVal) {
     webhookEventsInput.value = newVal.webhookEvents ? newVal.webhookEvents.join(', ') : 'all';
     const config = newVal.botConfig || {};
@@ -789,11 +791,24 @@ onUnmounted(() => {
   <div v-if="!token" class="auth-wrapper">
     <div class="auth-card">
       <div class="auth-header-logo">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M8.625 9.75a.625.625 0 11-1.25 0 .625.625 0 011.25 0zm4.875 0a.625.625 0 11-1.25 0 .625.625 0 011.25 0zm4.875 0a.625.625 0 11-1.25 0 .625.625 0 011.25 0z" />
-          <path stroke-linecap="round" stroke-linejoin="round"
-            d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12z" />
+        <svg
+          width="40"
+          height="40"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M8.625 9.75a.625.625 0 11-1.25 0 .625.625 0 011.25 0zm4.875 0a.625.625 0 11-1.25 0 .625.625 0 011.25 0zm4.875 0a.625.625 0 11-1.25 0 .625.625 0 011.25 0z"
+          />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12z"
+          />
         </svg>
         <h2>Zap-Zap SaaS Platform</h2>
         <p>Acesse o painel do seu tenant para controlar conexões e inteligência artificial.</p>
@@ -807,13 +822,25 @@ onUnmounted(() => {
       <form v-if="authMode === 'login'" @submit.prevent="handleLogin">
         <div class="form-group">
           <label class="form-label" for="login-email">E-mail</label>
-          <input id="login-email" v-model="authForm.email" type="email" class="form-input"
-            placeholder="seuemail@provedor.com" required />
+          <input
+            id="login-email"
+            v-model="authForm.email"
+            type="email"
+            class="form-input"
+            placeholder="seuemail@provedor.com"
+            required
+          />
         </div>
         <div class="form-group">
           <label class="form-label" for="login-password">Senha</label>
-          <input id="login-password" v-model="authForm.password" type="password" class="form-input"
-            placeholder="••••••••" required />
+          <input
+            id="login-password"
+            v-model="authForm.password"
+            type="password"
+            class="form-input"
+            placeholder="••••••••"
+            required
+          />
         </div>
         <button type="submit" class="btn btn-primary" :disabled="authLoading">
           {{ authLoading ? 'Autenticando...' : 'Entrar no Painel' }}
@@ -828,23 +855,47 @@ onUnmounted(() => {
       <form v-else @submit.prevent="handleRegister">
         <div class="form-group">
           <label class="form-label" for="register-name">Seu Nome</label>
-          <input id="register-name" v-model="authForm.name" type="text" class="form-input" placeholder="Nome Completo"
-            required />
+          <input
+            id="register-name"
+            v-model="authForm.name"
+            type="text"
+            class="form-input"
+            placeholder="Nome Completo"
+            required
+          />
         </div>
         <div class="form-group">
           <label class="form-label" for="register-email">E-mail Corporativo</label>
-          <input id="register-email" v-model="authForm.email" type="email" class="form-input"
-            placeholder="email@suaempresa.com" required />
+          <input
+            id="register-email"
+            v-model="authForm.email"
+            type="email"
+            class="form-input"
+            placeholder="email@suaempresa.com"
+            required
+          />
         </div>
         <div class="form-group">
           <label class="form-label" for="register-tenant">Nome da Organização (SaaS Tenant)</label>
-          <input id="register-tenant" v-model="authForm.tenantName" type="text" class="form-input"
-            placeholder="Ex: Minha Empresa Ltda" required />
+          <input
+            id="register-tenant"
+            v-model="authForm.tenantName"
+            type="text"
+            class="form-input"
+            placeholder="Ex: Minha Empresa Ltda"
+            required
+          />
         </div>
         <div class="form-group">
           <label class="form-label" for="register-password">Senha de Acesso</label>
-          <input id="register-password" v-model="authForm.password" type="password" class="form-input"
-            placeholder="Mínimo 6 caracteres" required />
+          <input
+            id="register-password"
+            v-model="authForm.password"
+            type="password"
+            class="form-input"
+            placeholder="Mínimo 6 caracteres"
+            required
+          />
         </div>
         <button type="submit" class="btn btn-primary" :disabled="authLoading">
           {{ authLoading ? 'Registrando...' : 'Registrar Organização' }}
@@ -881,42 +932,114 @@ onUnmounted(() => {
         <div class="card sidebar-nav">
           <h2 class="card-title">Menu Principal</h2>
           <div class="nav-links">
-            <a href="#" class="nav-link" :class="{ active: activeTab === 'sessions' }"
-              @click.prevent="activeTab = 'sessions'">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48L4.5 19.5l2.67-.89A9.37 9.37 0 0012 20.25z" />
+            <a
+              href="#"
+              class="nav-link"
+              :class="{ active: activeTab === 'sessions' }"
+              @click.prevent="activeTab = 'sessions'"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48L4.5 19.5l2.67-.89A9.37 9.37 0 0012 20.25z"
+                />
               </svg>
               Instâncias WhatsApp
             </a>
-            <a href="#" class="nav-link" :class="{ active: activeTab === 'ai' }" @click.prevent="activeTab = 'ai'">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M9.813 15.904L9 21m0-5.096c-2.924-.766-5-3.232-5-6.154a6.223 6.223 0 0110.454-4.5M9 15.904a6.208 6.208 0 006.183-4.096m0 0a6.223 6.223 0 00-6.183-5.808m6.183 9.904L15 21" />
+            <a
+              href="#"
+              class="nav-link"
+              :class="{ active: activeTab === 'ai' }"
+              @click.prevent="activeTab = 'ai'"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M9.813 15.904L9 21m0-5.096c-2.924-.766-5-3.232-5-6.154a6.223 6.223 0 0110.454-4.5M9 15.904a6.208 6.208 0 006.183-4.096m0 0a6.223 6.223 0 00-6.183-5.808m6.183 9.904L15 21"
+                />
               </svg>
               Configurações de IA
             </a>
-            <a href="#" class="nav-link" :class="{ active: activeTab === 'keys' }" @click.prevent="activeTab = 'keys'">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M15.75 5.25a3 3 0 013 3m3 0a3 3 0 01-3 3m-3-3a3 3 0 00-3-3m-12 11.25V18m0 0h11.25m-11.25 0h-.75m.75 0v3h3v-3m2.25 0h.75m.75 0v-3.75" />
+            <a
+              href="#"
+              class="nav-link"
+              :class="{ active: activeTab === 'keys' }"
+              @click.prevent="activeTab = 'keys'"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15.75 5.25a3 3 0 013 3m3 0a3 3 0 01-3 3m-3-3a3 3 0 00-3-3m-12 11.25V18m0 0h11.25m-11.25 0h-.75m.75 0v3h3v-3m2.25 0h.75m.75 0v-3.75"
+                />
               </svg>
               Chaves de API
             </a>
-            <a href="#" class="nav-link" :class="{ active: activeTab === 'logs' }" @click.prevent="activeTab = 'logs'">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            <a
+              href="#"
+              class="nav-link"
+              :class="{ active: activeTab === 'logs' }"
+              @click.prevent="activeTab = 'logs'"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+                />
               </svg>
               Auditoria e Logs
             </a>
           </div>
           <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 1.5rem 0" />
-          <button class="btn btn-danger"
-            style="display: flex; align-items: center; justify-content: center; gap: 0.5rem" @click="handleLogout">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+          <button
+            class="btn btn-danger"
+            style="display: flex; align-items: center; justify-content: center; gap: 0.5rem"
+            @click="handleLogout"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+              />
             </svg>
             Sair da Conta
           </button>
@@ -927,11 +1050,49 @@ onUnmounted(() => {
       <main>
         <div v-if="activeTab === 'sessions'">
           <!-- Menu Superior de Visualização e Grid Switcher -->
-          <div style="background-color: var(--bg-card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div
+            style="
+              background-color: var(--bg-card);
+              border: 1px solid var(--border);
+              padding: 1.5rem;
+              border-radius: 12px;
+              margin-bottom: 1.5rem;
+              display: flex;
+              flex-direction: column;
+              gap: 1rem;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 1rem;
+              "
+            >
               <div>
-                <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary-color);">
+                <h2
+                  style="
+                    font-size: 1.25rem;
+                    font-weight: 700;
+                    color: var(--text-primary);
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                  "
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    style="color: var(--primary-color)"
+                  >
                     <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
                     <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
                     <line x1="6" y1="6" x2="6.01" y2="6"></line>
@@ -939,31 +1100,78 @@ onUnmounted(() => {
                   </svg>
                   Gerenciador de Instâncias
                 </h2>
-                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.15rem;">Crie, pareie e monitore conexões do WhatsApp e robôs auto-respondedores.</p>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.15rem">
+                  Crie, pareie e monitore conexões do WhatsApp e robôs auto-respondedores.
+                </p>
               </div>
-              
-              <div style="display: flex; gap: 0.25rem; background-color: var(--bg-app); border: 1px solid var(--border); padding: 0.25rem; border-radius: 8px;">
-                <button 
-                  type="button" 
+
+              <div
+                style="
+                  display: flex;
+                  gap: 0.25rem;
+                  background-color: var(--bg-app);
+                  border: 1px solid var(--border);
+                  padding: 0.25rem;
+                  border-radius: 8px;
+                "
+              >
+                <button
+                  type="button"
                   class="btn"
                   :class="viewMode === 'split' ? 'btn-primary' : 'btn-secondary'"
-                  style="font-size: 0.75rem; padding: 0.35rem 0.75rem; width: auto; height: 32px; border: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem; line-height: 1;"
+                  style="
+                    font-size: 0.75rem;
+                    padding: 0.35rem 0.75rem;
+                    width: auto;
+                    height: 32px;
+                    border: none;
+                    border-radius: 6px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.35rem;
+                    line-height: 1;
+                  "
                   @click="viewMode = 'split'"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                     <line x1="9" y1="3" x2="9" y2="21"></line>
                   </svg>
                   Painel Lateral
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   class="btn"
                   :class="viewMode === 'grid' ? 'btn-primary' : 'btn-secondary'"
-                  style="font-size: 0.75rem; padding: 0.35rem 0.75rem; width: auto; height: 32px; border: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem; line-height: 1;"
+                  style="
+                    font-size: 0.75rem;
+                    padding: 0.35rem 0.75rem;
+                    width: auto;
+                    height: 32px;
+                    border: none;
+                    border-radius: 6px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.35rem;
+                    line-height: 1;
+                  "
                   @click="viewMode = 'grid'"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
                     <rect x="3" y="3" width="7" height="7"></rect>
                     <rect x="14" y="3" width="7" height="7"></rect>
                     <rect x="14" y="14" width="7" height="7"></rect>
@@ -975,57 +1183,134 @@ onUnmounted(() => {
             </div>
 
             <!-- Filtros Globais (Busca + Status) -->
-            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-top: 0.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
-              <div style="position: relative; display: flex; align-items: center; flex: 1; min-width: 260px;">
-                <input 
-                  v-model="searchQuery" 
-                  type="text" 
-                  class="form-input" 
-                  placeholder="Buscar por nome, ID ou telefone..." 
-                  style="margin-bottom: 0; padding-left: 2.25rem; font-size: 0.85rem; height: 38px; width: 100%;"
+            <div
+              style="
+                display: flex;
+                gap: 1rem;
+                align-items: center;
+                flex-wrap: wrap;
+                margin-top: 0.5rem;
+                border-top: 1px solid var(--border);
+                padding-top: 1rem;
+              "
+            >
+              <div
+                style="
+                  position: relative;
+                  display: flex;
+                  align-items: center;
+                  flex: 1;
+                  min-width: 260px;
+                "
+              >
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  class="form-input"
+                  placeholder="Buscar por nome, ID ou telefone..."
+                  style="
+                    margin-bottom: 0;
+                    padding-left: 2.25rem;
+                    font-size: 0.85rem;
+                    height: 38px;
+                    width: 100%;
+                  "
                 />
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 0.85rem; color: var(--text-muted); pointer-events: none;">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  style="
+                    position: absolute;
+                    left: 0.85rem;
+                    color: var(--text-muted);
+                    pointer-events: none;
+                  "
+                >
                   <circle cx="11" cy="11" r="8"></circle>
                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
               </div>
-              
-              <div style="display: flex; gap: 0.35rem; overflow-x: auto; padding-bottom: 0.25rem; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
-                <button 
+
+              <div
+                style="
+                  display: flex;
+                  gap: 0.35rem;
+                  overflow-x: auto;
+                  padding-bottom: 0.25rem;
+                  -webkit-overflow-scrolling: touch;
+                  scrollbar-width: none;
+                "
+              >
+                <button
                   type="button"
                   class="btn"
                   :class="statusFilter === 'all' ? 'btn-primary' : 'btn-secondary'"
-                  style="font-size: 0.7rem; padding: 0.35rem 0.65rem; width: auto; min-width: auto; height: 32px; border-radius: 6px;"
+                  style="
+                    font-size: 0.7rem;
+                    padding: 0.35rem 0.65rem;
+                    width: auto;
+                    min-width: auto;
+                    height: 32px;
+                    border-radius: 6px;
+                  "
                   @click="statusFilter = 'all'"
                 >
                   Todas ({{ sessions.length }})
                 </button>
-                <button 
+                <button
                   type="button"
                   class="btn"
                   :class="statusFilter === 'CONNECTED' ? 'btn-primary' : 'btn-secondary'"
-                  style="font-size: 0.7rem; padding: 0.35rem 0.65rem; width: auto; min-width: auto; height: 32px; border-radius: 6px;"
+                  style="
+                    font-size: 0.7rem;
+                    padding: 0.35rem 0.65rem;
+                    width: auto;
+                    min-width: auto;
+                    height: 32px;
+                    border-radius: 6px;
+                  "
                   @click="statusFilter = 'CONNECTED'"
                 >
                   Conectadas ({{ sessions.filter(s => s.status === 'CONNECTED').length }})
                 </button>
-                <button 
+                <button
                   type="button"
                   class="btn"
                   :class="statusFilter === 'PAIRING_REQUIRED' ? 'btn-primary' : 'btn-secondary'"
-                  style="font-size: 0.7rem; padding: 0.35rem 0.65rem; width: auto; min-width: auto; height: 32px; border-radius: 6px;"
+                  style="
+                    font-size: 0.7rem;
+                    padding: 0.35rem 0.65rem;
+                    width: auto;
+                    min-width: auto;
+                    height: 32px;
+                    border-radius: 6px;
+                  "
                   @click="statusFilter = 'PAIRING_REQUIRED'"
                 >
                   Parear ({{ sessions.filter(s => s.status === 'PAIRING_REQUIRED').length }})
                 </button>
-                <button 
+                <button
                   type="button"
                   class="btn"
                   :class="statusFilter === 'DISCONNECTED' ? 'btn-primary' : 'btn-secondary'"
-                  style="font-size: 0.7rem; padding: 0.35rem 0.65rem; width: auto; min-width: auto; height: 32px; border-radius: 6px;"
+                  style="
+                    font-size: 0.7rem;
+                    padding: 0.35rem 0.65rem;
+                    width: auto;
+                    min-width: auto;
+                    height: 32px;
+                    border-radius: 6px;
+                  "
                   @click="statusFilter = 'DISCONNECTED'"
                 >
-                  Off ({{ sessions.filter(s => s.status === 'DISCONNECTED' || s.status === 'CONNECTING').length }})
+                  Off ({{
+                    sessions.filter(s => s.status === 'DISCONNECTED' || s.status === 'CONNECTING')
+                      .length
+                  }})
                 </button>
               </div>
             </div>
@@ -1041,18 +1326,34 @@ onUnmounted(() => {
                 <form @submit.prevent="handleCreateSession">
                   <div class="form-group">
                     <label class="form-label" for="session-name">Nome da Instância</label>
-                    <input id="session-name" v-model="newSession.name" type="text" class="form-input"
-                      placeholder="Ex: Suporte de TI" required />
+                    <input
+                      id="session-name"
+                      v-model="newSession.name"
+                      type="text"
+                      class="form-input"
+                      placeholder="Ex: Suporte de TI"
+                      required
+                    />
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="session-id">ID Customizado (Opcional)</label>
-                    <input id="session-id" v-model="newSession.id" type="text" class="form-input"
-                      placeholder="Auto-gerado se vazio" />
+                    <input
+                      id="session-id"
+                      v-model="newSession.id"
+                      type="text"
+                      class="form-input"
+                      placeholder="Auto-gerado se vazio"
+                    />
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="session-webhook">Webhook URL (Opcional)</label>
-                    <input id="session-webhook" v-model="newSession.webhookUrl" type="url" class="form-input"
-                      placeholder="https://exemplo.com/callback" />
+                    <input
+                      id="session-webhook"
+                      v-model="newSession.webhookUrl"
+                      type="url"
+                      class="form-input"
+                      placeholder="https://exemplo.com/callback"
+                    />
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="connection-mode">Método de Conexão</label>
@@ -1062,9 +1363,17 @@ onUnmounted(() => {
                     </select>
                   </div>
                   <div v-if="connectionMode === 'pairing'" class="form-group">
-                    <label class="form-label" for="pairing-phone">Telefone (com DDI e DDD, apenas números)</label>
-                    <input id="pairing-phone" v-model="pairingPhone" type="text" class="form-input"
-                      placeholder="Ex: 5511999999999" required />
+                    <label class="form-label" for="pairing-phone"
+                      >Telefone (com DDI e DDD, apenas números)</label
+                    >
+                    <input
+                      id="pairing-phone"
+                      v-model="pairingPhone"
+                      type="text"
+                      class="form-input"
+                      placeholder="Ex: 5511999999999"
+                      required
+                    />
                   </div>
                   <button type="submit" class="btn btn-primary" :disabled="creatingSession">
                     {{ creatingSession ? 'Criando...' : 'Criar Instância' }}
@@ -1075,29 +1384,51 @@ onUnmounted(() => {
               <!-- Lista de Conexões -->
               <div class="card">
                 <h2 class="card-title">Instâncias WhatsApp</h2>
-                
-                <div v-if="sessions.length === 0" style="
+
+                <div
+                  v-if="sessions.length === 0"
+                  style="
                     color: var(--text-muted);
                     font-size: 0.85rem;
                     text-align: center;
                     padding: 1rem 0;
-                  ">
+                  "
+                >
                   Nenhuma instância cadastrada.
                 </div>
-                
-                <div v-else-if="filteredSessions.length === 0" style="
+
+                <div
+                  v-else-if="filteredSessions.length === 0"
+                  style="
                     color: var(--text-muted);
                     font-size: 0.85rem;
                     text-align: center;
                     padding: 2rem 0;
-                  ">
+                  "
+                >
                   Nenhuma instância correspondente.
                 </div>
-                
-                <div v-else class="sessions-list" style="max-height: 480px; overflow-y: auto; padding-right: 0.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
-                  <div v-for="session in filteredSessions" :key="session.id" class="session-item"
-                    :class="{ active: selectedSessionId === session.id }" @click="selectSession(session.id)">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+
+                <div
+                  v-else
+                  class="sessions-list"
+                  style="
+                    max-height: 480px;
+                    overflow-y: auto;
+                    padding-right: 0.25rem;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.75rem;
+                  "
+                >
+                  <div
+                    v-for="session in filteredSessions"
+                    :key="session.id"
+                    class="session-item"
+                    :class="{ active: selectedSessionId === session.id }"
+                    @click="selectSession(session.id)"
+                  >
+                    <div style="display: flex; align-items: center; gap: 0.75rem">
                       <!-- Pulse Indicator -->
                       <span class="status-dot" :class="session.status.toLowerCase()"></span>
                       <div class="session-item-info">
@@ -1105,12 +1436,15 @@ onUnmounted(() => {
                         <p>{{ session.id.slice(0, 8) }}...</p>
                       </div>
                     </div>
-                    <span class="badge" :class="{
-                      'badge-connected': session.status === 'CONNECTED',
-                      'badge-pairing': session.status === 'PAIRING_REQUIRED',
-                      'badge-connecting': session.status === 'CONNECTING',
-                      'badge-disconnected': session.status === 'DISCONNECTED',
-                    }">
+                    <span
+                      class="badge"
+                      :class="{
+                        'badge-connected': session.status === 'CONNECTED',
+                        'badge-pairing': session.status === 'PAIRING_REQUIRED',
+                        'badge-connecting': session.status === 'CONNECTING',
+                        'badge-disconnected': session.status === 'DISCONNECTED',
+                      }"
+                    >
                       {{ getStatusLabel(session.status) }}
                     </span>
                   </div>
@@ -1121,14 +1455,24 @@ onUnmounted(() => {
             <!-- Coluna Direita: Detalhes -->
             <div class="detail-pane">
               <div v-if="!selectedSession" class="detail-view-empty">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48L4.5 19.5l2.67-.89A9.37 9.37 0 0012 20.25z" />
+                <svg
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48L4.5 19.5l2.67-.89A9.37 9.37 0 0012 20.25z"
+                  />
                 </svg>
                 <h3>Nenhuma instância selecionada</h3>
                 <p>
-                  Selecione uma instância lateral para visualizar informações de pareamento, QR Code e
-                  enviar mensagens.
+                  Selecione uma instância lateral para visualizar informações de pareamento, QR Code
+                  e enviar mensagens.
                 </p>
               </div>
 
@@ -1136,7 +1480,8 @@ onUnmounted(() => {
                 <div class="session-detail-header">
                   <div>
                     <h2>{{ selectedSession.name }}</h2>
-                    <p style="
+                    <p
+                      style="
                         font-family: var(--font-mono);
                         font-size: 0.8rem;
                         color: var(--text-muted);
@@ -1144,302 +1489,683 @@ onUnmounted(() => {
                         display: flex;
                         align-items: center;
                         gap: 0.35rem;
-                      ">
+                      "
+                    >
                       ID: {{ selectedSession.id }}
-                      <button type="button" @click="copyToClipboard(selectedSession.id, 'id-' + selectedSession.id)" style="background: none; border: none; padding: 0.15rem; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center;" title="Copiar ID">
-                        <svg v-if="copiedId !== 'id-' + selectedSession.id" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <button
+                        type="button"
+                        @click="copyToClipboard(selectedSession.id, 'id-' + selectedSession.id)"
+                        style="
+                          background: none;
+                          border: none;
+                          padding: 0.15rem;
+                          color: var(--text-muted);
+                          cursor: pointer;
+                          display: inline-flex;
+                          align-items: center;
+                        "
+                        title="Copiar ID"
+                      >
+                        <svg
+                          v-if="copiedId !== 'id-' + selectedSession.id"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
                           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                         </svg>
-                        <span v-else style="font-size: 0.65rem; color: var(--status-connected)">Copiado!</span>
+                        <span v-else style="font-size: 0.65rem; color: var(--status-connected)"
+                          >Copiado!</span
+                        >
                       </button>
                     </p>
                   </div>
-                <span class="badge" :class="{
-                  'badge-connected': selectedSession.status === 'CONNECTED',
-                  'badge-pairing': selectedSession.status === 'PAIRING_REQUIRED',
-                  'badge-connecting': selectedSession.status === 'CONNECTING',
-                  'badge-disconnected': selectedSession.status === 'DISCONNECTED',
-                }" style="padding: 0.4rem 0.8rem; font-size: 0.85rem">
-                  {{ getStatusLabel(selectedSession.status) }}
-                </span>
-              </div>
+                  <span
+                    class="badge"
+                    :class="{
+                      'badge-connected': selectedSession.status === 'CONNECTED',
+                      'badge-pairing': selectedSession.status === 'PAIRING_REQUIRED',
+                      'badge-connecting': selectedSession.status === 'CONNECTING',
+                      'badge-disconnected': selectedSession.status === 'DISCONNECTED',
+                    }"
+                    style="padding: 0.4rem 0.8rem; font-size: 0.85rem"
+                  >
+                    {{ getStatusLabel(selectedSession.status) }}
+                  </span>
+                </div>
 
-              <div class="session-metadata-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
-                <div class="metadata-item">
-                  <div class="metadata-item-label">Webhook URL</div>
-                  <div class="metadata-item-value metadata-item-value-mono">
-                    {{ selectedSession.webhookUrl || '(Sem webhook)' }}
-                  </div>
-                </div>
-                <div class="metadata-item">
-                  <div class="metadata-item-label">Número Conectado</div>
-                  <div class="metadata-item-value">
-                    {{ selectedSession.phone || '(Não pareado)' }}
-                  </div>
-                </div>
-                <div class="metadata-item">
-                  <div class="metadata-item-label">Bot de Auto-Resposta</div>
-                  <div class="metadata-item-value">
-                    <span :style="{ color: selectedSession.botEnabled ? 'var(--status-connected)' : 'var(--text-muted)' }">
-                      {{ selectedSession.botEnabled ? 'Ativado' : 'Desativado' }}
-                    </span>
-                  </div>
-                </div>
-                <div class="metadata-item">
-                  <div class="metadata-item-label">Filtros de Eventos Webhook</div>
-                  <div class="metadata-item-value">
-                    {{ selectedSession.webhookEvents ? selectedSession.webhookEvents.join(', ') : 'all' }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Pareamento Requerido (QR Code ou Pairing Code) -->
-              <div v-if="selectedSession.status === 'PAIRING_REQUIRED'" class="qr-container">
-                <!-- Se for pairing code -->
-                <div v-if="selectedSession.pairingCode || selectedSession.phone" style="width: 100%;">
-                  <div v-if="selectedSession.pairingCode" class="pairing-code-box" style="margin-top: 1rem; margin-bottom: 2rem; text-align: center; background-color: var(--bg-hover); border: 1px dashed var(--border-color); padding: 1.5rem; border-radius: 12px; position: relative;">
-                    <h3 style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 600;">Código de Pareamento (Pairing Code)</h3>
-                    <div style="font-family: var(--font-mono); font-size: 2.25rem; font-weight: 700; letter-spacing: 4px; color: var(--primary-color); display: flex; align-items: center; justify-content: center; gap: 0.75rem;">
-                      {{ selectedSession.pairingCode }}
-                      <button type="button" @click="copyToClipboard(selectedSession.pairingCode, 'pairing-code')" style="background: none; border: none; padding: 0.25rem; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center;" title="Copiar código">
-                        <svg v-if="copiedId !== 'pairing-code'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </svg>
-                        <span v-else style="font-size: 0.75rem; color: var(--status-connected); font-weight: 600; letter-spacing: normal;">Copiado!</span>
-                      </button>
+                <div
+                  class="session-metadata-grid"
+                  style="
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 1rem;
+                    margin-bottom: 1.5rem;
+                  "
+                >
+                  <div class="metadata-item">
+                    <div class="metadata-item-label">Webhook URL</div>
+                    <div class="metadata-item-value metadata-item-value-mono">
+                      {{ selectedSession.webhookUrl || '(Sem webhook)' }}
                     </div>
-                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem; max-width: 340px; margin-inline: auto;">
-                      Insira este código na notificação do seu celular (ou em "Aparelhos Conectados" > "Conectar com número de telefone").
-                    </p>
                   </div>
-                  <div v-else style="padding: 2rem 0; text-align: center; color: var(--text-muted)">
-                    Aguardando geração do Código de Pareamento pelo WhatsApp...
+                  <div class="metadata-item">
+                    <div class="metadata-item-label">Número Conectado</div>
+                    <div class="metadata-item-value">
+                      {{ selectedSession.phone || '(Não pareado)' }}
+                    </div>
+                  </div>
+                  <div class="metadata-item">
+                    <div class="metadata-item-label">Bot de Auto-Resposta</div>
+                    <div class="metadata-item-value">
+                      <span
+                        :style="{
+                          color: selectedSession.botEnabled
+                            ? 'var(--status-connected)'
+                            : 'var(--text-muted)',
+                        }"
+                      >
+                        {{ selectedSession.botEnabled ? 'Ativado' : 'Desativado' }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="metadata-item">
+                    <div class="metadata-item-label">Filtros de Eventos Webhook</div>
+                    <div class="metadata-item-value">
+                      {{
+                        selectedSession.webhookEvents
+                          ? selectedSession.webhookEvents.join(', ')
+                          : 'all'
+                      }}
+                    </div>
                   </div>
                 </div>
-                <!-- Se for QR Code -->
-                <div v-else style="width: 100%;">
-                  <div v-if="selectedSession.qrCode" class="qr-box">
-                    <QrcodeVue :value="selectedSession.qrCode" :size="220" level="M" />
+
+                <!-- Pareamento Requerido (QR Code ou Pairing Code) -->
+                <div v-if="selectedSession.status === 'PAIRING_REQUIRED'" class="qr-container">
+                  <!-- Se for pairing code -->
+                  <div
+                    v-if="selectedSession.pairingCode || selectedSession.phone"
+                    style="width: 100%"
+                  >
+                    <div
+                      v-if="selectedSession.pairingCode"
+                      class="pairing-code-box"
+                      style="
+                        margin-top: 1rem;
+                        margin-bottom: 2rem;
+                        text-align: center;
+                        background-color: var(--bg-hover);
+                        border: 1px dashed var(--border-color);
+                        padding: 1.5rem;
+                        border-radius: 12px;
+                        position: relative;
+                      "
+                    >
+                      <h3
+                        style="
+                          font-size: 0.85rem;
+                          text-transform: uppercase;
+                          color: var(--text-secondary);
+                          margin-bottom: 0.5rem;
+                          font-weight: 600;
+                        "
+                      >
+                        Código de Pareamento (Pairing Code)
+                      </h3>
+                      <div
+                        style="
+                          font-family: var(--font-mono);
+                          font-size: 2.25rem;
+                          font-weight: 700;
+                          letter-spacing: 4px;
+                          color: var(--primary-color);
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                          gap: 0.75rem;
+                        "
+                      >
+                        {{ selectedSession.pairingCode }}
+                        <button
+                          type="button"
+                          @click="copyToClipboard(selectedSession.pairingCode, 'pairing-code')"
+                          style="
+                            background: none;
+                            border: none;
+                            padding: 0.25rem;
+                            color: var(--text-muted);
+                            cursor: pointer;
+                            display: inline-flex;
+                            align-items: center;
+                          "
+                          title="Copiar código"
+                        >
+                          <svg
+                            v-if="copiedId !== 'pairing-code'"
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path
+                              d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                            ></path>
+                          </svg>
+                          <span
+                            v-else
+                            style="
+                              font-size: 0.75rem;
+                              color: var(--status-connected);
+                              font-weight: 600;
+                              letter-spacing: normal;
+                            "
+                            >Copiado!</span
+                          >
+                        </button>
+                      </div>
+                      <p
+                        style="
+                          font-size: 0.8rem;
+                          color: var(--text-secondary);
+                          margin-top: 0.5rem;
+                          max-width: 340px;
+                          margin-inline: auto;
+                        "
+                      >
+                        Insira este código na notificação do seu celular (ou em "Aparelhos
+                        Conectados" > "Conectar com número de telefone").
+                      </p>
+                    </div>
+                    <div
+                      v-else
+                      style="padding: 2rem 0; text-align: center; color: var(--text-muted)"
+                    >
+                      Aguardando geração do Código de Pareamento pelo WhatsApp...
+                    </div>
                   </div>
-                  <div v-else style="padding: 2rem 0; text-align: center; color: var(--text-muted)">
-                    Aguardando geração do QR Code pelo WhatsApp...
+                  <!-- Se for QR Code -->
+                  <div v-else style="width: 100%">
+                    <div v-if="selectedSession.qrCode" class="qr-box">
+                      <QrcodeVue :value="selectedSession.qrCode" :size="220" level="M" />
+                    </div>
+                    <div
+                      v-else
+                      style="padding: 2rem 0; text-align: center; color: var(--text-muted)"
+                    >
+                      Aguardando geração do QR Code pelo WhatsApp...
+                    </div>
+                    <h3 style="font-weight: 600; margin-bottom: 0.25rem; text-align: center">
+                      Escaneie o QR Code no seu celular
+                    </h3>
+                    <p
+                      style="
+                        font-size: 0.85rem;
+                        color: var(--text-secondary);
+                        max-width: 400px;
+                        margin-inline: auto;
+                        text-align: center;
+                      "
+                    >
+                      Vá em Aparelhos Conectados no seu WhatsApp e clique em Conectar Aparelho para
+                      parear.
+                    </p>
                   </div>
-                  <h3 style="font-weight: 600; margin-bottom: 0.25rem; text-align: center;">
-                    Escaneie o QR Code no seu celular
+                </div>
+
+                <!-- Conectado -->
+                <div
+                  v-if="selectedSession.status === 'CONNECTED'"
+                  style="
+                    margin-bottom: 2rem;
+                    background-color: hsla(142, 70%, 45%, 0.05);
+                    border: 1px solid hsla(142, 70%, 45%, 0.2);
+                    padding: 1.5rem;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                  "
+                >
+                  <div
+                    style="
+                      background-color: var(--status-connected);
+                      width: 12px;
+                      height: 12px;
+                      border-radius: 50%;
+                    "
+                  ></div>
+                  <div>
+                    <h3 style="font-size: 0.95rem; font-weight: 600">Instância WhatsApp Online</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem">
+                      Esta instância está emparelhada com o número
+                      <strong>{{ selectedSession.phone }}</strong
+                      >. O bot de auto-resposta responderá automaticamente baseado nas configurações
+                      configuradas abaixo.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Ações da Instância -->
+                <div style="display: flex; gap: 1rem; margin-top: 1rem">
+                  <button
+                    v-if="selectedSession.status === 'CONNECTED'"
+                    class="btn btn-secondary"
+                    style="width: auto"
+                    @click="handleDisconnect(selectedSession.id)"
+                  >
+                    Desconectar Instância
+                  </button>
+                  <button
+                    class="btn btn-danger"
+                    style="width: auto; margin-left: auto"
+                    @click="handleSessionLogout(selectedSession.id)"
+                  >
+                    Excluir e Resetar Conexão
+                  </button>
+                </div>
+
+                <!-- CONFIGURAÇÕES DA INSTÂNCIA (Webhook & Bot) -->
+                <div
+                  style="
+                    margin-top: 2.5rem;
+                    border-top: 1px solid var(--border-color);
+                    padding-top: 2rem;
+                  "
+                >
+                  <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem">
+                    Configurações da Instância
                   </h3>
-                  <p style="font-size: 0.85rem; color: var(--text-secondary); max-width: 400px; margin-inline: auto; text-align: center;">
-                    Vá em Aparelhos Conectados no seu WhatsApp e clique em Conectar Aparelho para parear.
-                  </p>
-                </div>
-              </div>
-
-              <!-- Conectado -->
-              <div v-if="selectedSession.status === 'CONNECTED'" style="
-                  margin-bottom: 2rem;
-                  background-color: hsla(142, 70%, 45%, 0.05);
-                  border: 1px solid hsla(142, 70%, 45%, 0.2);
-                  padding: 1.5rem;
-                  border-radius: 12px;
-                  display: flex;
-                  align-items: center;
-                  gap: 1rem;
-                ">
-                <div style="
-                    background-color: var(--status-connected);
-                    width: 12px;
-                    height: 12px;
-                    border-radius: 50%;
-                  "></div>
-                <div>
-                  <h3 style="font-size: 0.95rem; font-weight: 600">Instância WhatsApp Online</h3>
-                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem">
-                    Esta instância está emparelhada com o número <strong>{{ selectedSession.phone }}</strong>.
-                    O bot de auto-resposta responderá automaticamente baseado nas configurações configuradas abaixo.
-                  </p>
-                </div>
-              </div>
-
-              <!-- Ações da Instância -->
-              <div style="display: flex; gap: 1rem; margin-top: 1rem">
-                <button v-if="selectedSession.status === 'CONNECTED'" class="btn btn-secondary" style="width: auto"
-                  @click="handleDisconnect(selectedSession.id)">
-                  Desconectar Instância
-                </button>
-                <button class="btn btn-danger" style="width: auto; margin-left: auto"
-                  @click="handleSessionLogout(selectedSession.id)">
-                  Excluir e Resetar Conexão
-                </button>
-              </div>
-
-              <!-- CONFIGURAÇÕES DA INSTÂNCIA (Webhook & Bot) -->
-              <div style="margin-top: 2.5rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
-                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem">
-                  Configurações da Instância
-                </h3>
-                <form @submit.prevent="handleUpdateSession">
-                  <div class="form-group">
-                    <label class="form-label" for="edit-webhook-url">Webhook URL</label>
-                    <input id="edit-webhook-url" v-model="selectedSession.webhookUrl" type="url" class="form-input"
-                      placeholder="https://exemplo.com/callback" />
-                  </div>
-                  
-                  <div class="form-group">
-                    <label class="form-label" for="edit-webhook-events">Eventos do Webhook (separados por vírgula)</label>
-                    <input id="edit-webhook-events" v-model="webhookEventsInput" type="text" class="form-input"
-                      placeholder="all, message, connection" />
-                    <span class="form-help">Use 'all' para todos os eventos ou selecione eventos específicos como 'message', 'connection'.</span>
-                  </div>
-
-                  <div class="form-group" style="margin-top: 1.5rem;">
-                    <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 600;">
-                      <input type="checkbox" v-model="selectedSession.botEnabled" style="width: 16px; height: 16px;" />
-                      Ativar Bot de Auto-Resposta
-                    </label>
-                  </div>
-
-                  <div v-if="selectedSession.botEnabled" class="bot-config-block" style="background-color: var(--bg-hover); padding: 1.25rem; border-radius: 8px; margin-top: 0.75rem; border: 1px solid var(--border-color);">
+                  <form @submit.prevent="handleUpdateSession">
                     <div class="form-group">
-                      <label class="form-label" for="edit-bot-type">Tipo de Bot</label>
-                      <select id="edit-bot-type" v-model="botConfigInput.type" class="form-input">
-                        <option value="simple">Simple (Regras de palavras-chave / Keywords)</option>
-                        <option value="ai">AI Agent (Motor RAG Langgraph + Prompt de IA)</option>
-                      </select>
+                      <label class="form-label" for="edit-webhook-url">Webhook URL</label>
+                      <input
+                        id="edit-webhook-url"
+                        v-model="selectedSession.webhookUrl"
+                        type="url"
+                        class="form-input"
+                        placeholder="https://exemplo.com/callback"
+                      />
                     </div>
 
-                    <div v-if="botConfigInput.type === 'simple'" class="form-group">
-                      <label class="form-label" for="edit-bot-rules">Regras do Bot (Formato JSON)</label>
-                      <textarea id="edit-bot-rules" v-model="botRulesJsonInput" class="form-input" rows="5"
-                        style="font-family: var(--font-mono); font-size: 0.8rem;"
-                        placeholder='[\n  { "trigger": "oi", "response": "Olá! Como posso ajudar?" },\n  { "trigger": "ajuda", "response": "Por favor, descreva sua dúvida." }\n]'></textarea>
-                      <span class="form-help">Insira um array JSON válido de objetos com "trigger" e "response".</span>
+                    <div class="form-group">
+                      <label class="form-label" for="edit-webhook-events"
+                        >Eventos do Webhook (separados por vírgula)</label
+                      >
+                      <input
+                        id="edit-webhook-events"
+                        v-model="webhookEventsInput"
+                        type="text"
+                        class="form-input"
+                        placeholder="all, message, connection"
+                      />
+                      <span class="form-help"
+                        >Use 'all' para todos os eventos ou selecione eventos específicos como
+                        'message', 'connection'.</span
+                      >
                     </div>
 
-                    <div v-if="botConfigInput.type === 'ai'" class="form-group">
-                      <label class="form-label" for="edit-bot-prompt">Prompt da IA (Instruções e Regras)</label>
-                      <textarea id="edit-bot-prompt" v-model="botConfigInput.prompt" class="form-input" rows="5"
-                        placeholder="Ex: Você é um assistente virtual atencioso que trabalha na Empresa X..."></textarea>
-                      <span class="form-help">Estas regras guiarão a geração de respostas do assistente inteligente (RAG).</span>
+                    <div class="form-group" style="margin-top: 1.5rem">
+                      <label
+                        class="form-label"
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 0.5rem;
+                          cursor: pointer;
+                          font-weight: 600;
+                        "
+                      >
+                        <input
+                          type="checkbox"
+                          v-model="selectedSession.botEnabled"
+                          style="width: 16px; height: 16px"
+                        />
+                        Ativar Bot de Auto-Resposta
+                      </label>
                     </div>
-                  </div>
 
-                  <button type="submit" class="btn btn-primary" style="width: auto; margin-top: 1rem;" :disabled="updatingSession">
-                    {{ updatingSession ? 'Salvando...' : 'Salvar Configurações' }}
-                  </button>
-                </form>
-              </div>
+                    <div
+                      v-if="selectedSession.botEnabled"
+                      class="bot-config-block"
+                      style="
+                        background-color: var(--bg-hover);
+                        padding: 1.25rem;
+                        border-radius: 8px;
+                        margin-top: 0.75rem;
+                        border: 1px solid var(--border-color);
+                      "
+                    >
+                      <div class="form-group">
+                        <label class="form-label" for="edit-bot-type">Tipo de Bot</label>
+                        <select id="edit-bot-type" v-model="botConfigInput.type" class="form-input">
+                          <option value="simple">
+                            Simple (Regras de palavras-chave / Keywords)
+                          </option>
+                          <option value="ai">AI Agent (Motor RAG Langgraph + Prompt de IA)</option>
+                        </select>
+                      </div>
 
-              <!-- Disparo de Mensagem de Teste -->
-              <div v-if="selectedSession.status === 'CONNECTED'" class="test-send-form" style="
-                  margin-top: 2.5rem;
-                  border-top: 1px solid var(--border-color);
-                  padding-top: 2rem;
-                ">
-                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem">
-                  Disparar Mensagem de Teste
-                </h3>
-                <div v-if="testMessage.status" class="alert"
-                  :class="testMessage.status === 'success' ? 'alert-success' : 'alert-error'">
-                  {{ testMessage.message }}
+                      <div v-if="botConfigInput.type === 'simple'" class="form-group">
+                        <label class="form-label" for="edit-bot-rules"
+                          >Regras do Bot (Formato JSON)</label
+                        >
+                        <textarea
+                          id="edit-bot-rules"
+                          v-model="botRulesJsonInput"
+                          class="form-input"
+                          rows="5"
+                          style="font-family: var(--font-mono); font-size: 0.8rem"
+                          placeholder='[\n  { "trigger": "oi", "response": "Olá! Como posso ajudar?" },\n  { "trigger": "ajuda", "response": "Por favor, descreva sua dúvida." }\n]'
+                        ></textarea>
+                        <span class="form-help"
+                          >Insira um array JSON válido de objetos com "trigger" e "response".</span
+                        >
+                      </div>
+
+                      <div v-if="botConfigInput.type === 'ai'" class="form-group">
+                        <label class="form-label" for="edit-bot-prompt"
+                          >Prompt da IA (Instruções e Regras)</label
+                        >
+                        <textarea
+                          id="edit-bot-prompt"
+                          v-model="botConfigInput.prompt"
+                          class="form-input"
+                          rows="5"
+                          placeholder="Ex: Você é um assistente virtual atencioso que trabalha na Empresa X..."
+                        ></textarea>
+                        <span class="form-help"
+                          >Estas regras guiarão a geração de respostas do assistente inteligente
+                          (RAG).</span
+                        >
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      class="btn btn-primary"
+                      style="width: auto; margin-top: 1rem"
+                      :disabled="updatingSession"
+                    >
+                      {{ updatingSession ? 'Salvando...' : 'Salvar Configurações' }}
+                    </button>
+                  </form>
                 </div>
-                <form @submit.prevent="handleSendTestMessage">
-                  <div class="form-group">
-                    <label class="form-label" for="test-to">JID ou Número do Destinatário</label>
-                    <input id="test-to" v-model="testMessage.to" type="text" class="form-input"
-                      placeholder="Ex: 5511999999999" required />
+
+                <!-- Disparo de Mensagem de Teste -->
+                <div
+                  v-if="selectedSession.status === 'CONNECTED'"
+                  class="test-send-form"
+                  style="
+                    margin-top: 2.5rem;
+                    border-top: 1px solid var(--border-color);
+                    padding-top: 2rem;
+                  "
+                >
+                  <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem">
+                    Disparar Mensagem de Teste
+                  </h3>
+                  <div
+                    v-if="testMessage.status"
+                    class="alert"
+                    :class="testMessage.status === 'success' ? 'alert-success' : 'alert-error'"
+                  >
+                    {{ testMessage.message }}
                   </div>
-                  <div class="form-group">
-                    <label class="form-label" for="test-text">Mensagem</label>
-                    <textarea id="test-text" v-model="testMessage.text" class="form-input" rows="3"
-                      placeholder="Escreva o texto aqui..." required></textarea>
-                  </div>
-                  <button type="submit" class="btn btn-primary" style="width: auto" :disabled="testMessage.sending">
-                    {{ testMessage.sending ? 'Enviando...' : 'Enviar Mensagem' }}
-                  </button>
-                </form>
+                  <form @submit.prevent="handleSendTestMessage">
+                    <div class="form-group">
+                      <label class="form-label" for="test-to">JID ou Número do Destinatário</label>
+                      <input
+                        id="test-to"
+                        v-model="testMessage.to"
+                        type="text"
+                        class="form-input"
+                        placeholder="Ex: 5511999999999"
+                        required
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="test-text">Mensagem</label>
+                      <textarea
+                        id="test-text"
+                        v-model="testMessage.text"
+                        class="form-input"
+                        rows="3"
+                        placeholder="Escreva o texto aqui..."
+                        required
+                      ></textarea>
+                    </div>
+                    <button
+                      type="submit"
+                      class="btn btn-primary"
+                      style="width: auto"
+                      :disabled="testMessage.sending"
+                    >
+                      {{ testMessage.sending ? 'Enviando...' : 'Enviar Mensagem' }}
+                    </button>
+                  </form>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        
-        <!-- MODO GRID VIEW (Visualização em Grade de Alta Densidade) -->
-        <div v-else>
-            <div v-if="filteredSessions.length === 0" style="
+
+          <!-- MODO GRID VIEW (Visualização em Grade de Alta Densidade) -->
+          <div v-else>
+            <div
+              v-if="filteredSessions.length === 0"
+              style="
                 background-color: var(--bg-card);
                 border: 1px solid var(--border);
                 border-radius: 12px;
                 text-align: center;
                 color: var(--text-muted);
                 padding: 4rem 2rem;
-              ">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 1rem; color: var(--text-muted); display: inline-block;">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48L4.5 19.5l2.67-.89A9.37 9.37 0 0012 20.25z" />
+              "
+            >
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                style="margin-bottom: 1rem; color: var(--text-muted); display: inline-block"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48L4.5 19.5l2.67-.89A9.37 9.37 0 0012 20.25z"
+                />
               </svg>
               <h3>Nenhuma instância encontrada</h3>
-              <p style="margin-top: 0.5rem; font-size: 0.9rem;">Tente ajustar seus filtros de busca ou status no painel superior.</p>
+              <p style="margin-top: 0.5rem; font-size: 0.9rem">
+                Tente ajustar seus filtros de busca ou status no painel superior.
+              </p>
             </div>
-            
-            <div v-else style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; align-items: start;">
+
+            <div
+              v-else
+              style="
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                gap: 1.5rem;
+                align-items: start;
+              "
+            >
               <!-- Card de cada Instância na Grade -->
-              <div v-for="session in filteredSessions" :key="session.id" class="card" 
+              <div
+                v-for="session in filteredSessions"
+                :key="session.id"
+                class="card"
                 :style="{
                   borderColor: selectedSessionId === session.id ? 'var(--accent)' : 'var(--border)',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
                 }"
                 @click="selectSessionAndSwitch(session.id)"
               >
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    margin-bottom: 1rem;
+                  "
+                >
                   <div>
-                    <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">{{ session.name }}</h3>
-                    <div style="display: flex; align-items: center; gap: 0.25rem; margin-top: 0.25rem;">
-                      <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">ID: {{ session.id.slice(0, 8) }}...</span>
-                      <button type="button" @click.stop="copyToClipboard(session.id, 'id-' + session.id)" style="background: none; border: none; padding: 0.15rem; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center;">
-                        <svg v-if="copiedId !== 'id-' + session.id" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <h3 style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary)">
+                      {{ session.name }}
+                    </h3>
+                    <div
+                      style="display: flex; align-items: center; gap: 0.25rem; margin-top: 0.25rem"
+                    >
+                      <span
+                        style="
+                          font-family: var(--font-mono);
+                          font-size: 0.75rem;
+                          color: var(--text-muted);
+                        "
+                        >ID: {{ session.id.slice(0, 8) }}...</span
+                      >
+                      <button
+                        type="button"
+                        @click.stop="copyToClipboard(session.id, 'id-' + session.id)"
+                        style="
+                          background: none;
+                          border: none;
+                          padding: 0.15rem;
+                          color: var(--text-muted);
+                          cursor: pointer;
+                          display: inline-flex;
+                          align-items: center;
+                        "
+                      >
+                        <svg
+                          v-if="copiedId !== 'id-' + session.id"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
                           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                         </svg>
-                        <span v-else style="font-size: 0.65rem; color: var(--status-connected)">Copiado!</span>
+                        <span v-else style="font-size: 0.65rem; color: var(--status-connected)"
+                          >Copiado!</span
+                        >
                       </button>
                     </div>
                   </div>
-                  
+
                   <!-- Pulsing Status Ring -->
-                  <div style="display: flex; align-items: center; gap: 0.5rem; background-color: var(--bg-app); border: 1px solid var(--border); padding: 0.35rem 0.65rem; border-radius: 20px;">
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 0.5rem;
+                      background-color: var(--bg-app);
+                      border: 1px solid var(--border);
+                      padding: 0.35rem 0.65rem;
+                      border-radius: 20px;
+                    "
+                  >
                     <span class="status-dot" :class="session.status.toLowerCase()"></span>
-                    <span style="font-size: 0.75rem; font-weight: 600;">{{ getStatusLabel(session.status) }}</span>
+                    <span style="font-size: 0.75rem; font-weight: 600">{{
+                      getStatusLabel(session.status)
+                    }}</span>
                   </div>
                 </div>
 
                 <!-- Detalhes Rápidos -->
-                <div style="background-color: var(--bg-app); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                  <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--text-secondary);">Número:</span>
-                    <span style="font-weight: 500; font-family: var(--font-mono);">{{ session.phone || '(Não pareado)' }}</span>
+                <div
+                  style="
+                    background-color: var(--bg-app);
+                    border: 1px solid var(--border);
+                    border-radius: 8px;
+                    padding: 0.75rem 1rem;
+                    margin-bottom: 1.25rem;
+                    font-size: 0.85rem;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.5rem;
+                  "
+                >
+                  <div style="display: flex; justify-content: space-between">
+                    <span style="color: var(--text-secondary)">Número:</span>
+                    <span style="font-weight: 500; font-family: var(--font-mono)">{{
+                      session.phone || '(Não pareado)'
+                    }}</span>
                   </div>
-                  <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--text-secondary);">Auto-Resposta:</span>
-                    <span :style="{ color: session.botEnabled ? 'var(--status-connected)' : 'var(--text-muted)' }" style="font-weight: 600;">
+                  <div style="display: flex; justify-content: space-between">
+                    <span style="color: var(--text-secondary)">Auto-Resposta:</span>
+                    <span
+                      :style="{
+                        color: session.botEnabled ? 'var(--status-connected)' : 'var(--text-muted)',
+                      }"
+                      style="font-weight: 600"
+                    >
                       {{ session.botEnabled ? 'Ativado' : 'Desativado' }}
                     </span>
                   </div>
-                  <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--text-secondary);">Filtros Webhook:</span>
-                    <span style="font-weight: 500; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" :title="session.webhookEvents ? session.webhookEvents.join(', ') : 'all'">
+                  <div style="display: flex; justify-content: space-between">
+                    <span style="color: var(--text-secondary)">Filtros Webhook:</span>
+                    <span
+                      style="
+                        font-weight: 500;
+                        max-width: 140px;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                      "
+                      :title="session.webhookEvents ? session.webhookEvents.join(', ') : 'all'"
+                    >
                       {{ session.webhookEvents ? session.webhookEvents.join(', ') : 'all' }}
                     </span>
                   </div>
                 </div>
 
                 <!-- Ações Rápidas (Grid view) -->
-                <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-                  <button type="button" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; width: auto; height: 32px;" @click.stop="selectSessionAndSwitch(session.id)">
+                <div style="display: flex; gap: 0.5rem; justify-content: flex-end">
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    style="font-size: 0.75rem; padding: 0.35rem 0.65rem; width: auto; height: 32px"
+                    @click.stop="selectSessionAndSwitch(session.id)"
+                  >
                     Gerenciar
                   </button>
-                  <button v-if="session.status === 'CONNECTED'" type="button" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; width: auto; height: 32px; color: var(--status-disconnected); borderColor: hsla(0, 84%, 60%, 0.2);" @click.stop="handleDisconnect(session.id)">
+                  <button
+                    v-if="session.status === 'CONNECTED'"
+                    type="button"
+                    class="btn btn-secondary"
+                    style="
+                      font-size: 0.75rem;
+                      padding: 0.35rem 0.65rem;
+                      width: auto;
+                      height: 32px;
+                      color: var(--status-disconnected);
+                      bordercolor: hsla(0, 84%, 60%, 0.2);
+                    "
+                    @click.stop="handleDisconnect(session.id)"
+                  >
                     Desconectar
                   </button>
-                  <button type="button" class="btn btn-danger" style="font-size: 0.75rem; padding: 0.35rem 0.65rem; width: auto; height: 32px;" @click.stop="handleSessionLogout(session.id)">
+                  <button
+                    type="button"
+                    class="btn btn-danger"
+                    style="font-size: 0.75rem; padding: 0.35rem 0.65rem; width: auto; height: 32px"
+                    @click.stop="handleSessionLogout(session.id)"
+                  >
                     Resetar
                   </button>
                 </div>
@@ -1472,35 +2198,70 @@ onUnmounted(() => {
 
             <!-- Campos Condicionais baseados no provedor -->
             <div class="form-group">
-              <label class="form-label" for="ai-api-key">Chave de API / Token de Acesso (API Key)</label>
-              <input id="ai-api-key" v-model="aiConfig.aiApiKey" type="password" class="form-input"
-                placeholder="Chave de API (Opcional - Requerido se usar OpenAI/Gemini ou Ollama-cloud/remoto autenticado)" />
-              <span class="form-help">Seu token é armazenado com criptografia segura no banco de dados.</span>
+              <label class="form-label" for="ai-api-key"
+                >Chave de API / Token de Acesso (API Key)</label
+              >
+              <input
+                id="ai-api-key"
+                v-model="aiConfig.aiApiKey"
+                type="password"
+                class="form-input"
+                placeholder="Chave de API (Opcional - Requerido se usar OpenAI/Gemini ou Ollama-cloud/remoto autenticado)"
+              />
+              <span class="form-help"
+                >Seu token é armazenado com criptografia segura no banco de dados.</span
+              >
             </div>
 
             <div v-if="aiConfig.aiProvider !== 'gemini'" class="form-group">
               <label class="form-label" for="ai-base-url">URL Base da API (Base URL)</label>
-              <input id="ai-base-url" v-model="aiConfig.aiBaseUrl" type="url" class="form-input"
-                placeholder="Ex: https://api.openai.com/v1 ou http://localhost:11434/v1" />
-              <span class="form-help">Requerido se usar provedor compatível como Ollama, Together AI, DeepSeek ou
-                Llama.cpp.</span>
+              <input
+                id="ai-base-url"
+                v-model="aiConfig.aiBaseUrl"
+                type="url"
+                class="form-input"
+                placeholder="Ex: https://api.openai.com/v1 ou http://localhost:11434/v1"
+              />
+              <span class="form-help"
+                >Requerido se usar provedor compatível como Ollama, Together AI, DeepSeek ou
+                Llama.cpp.</span
+              >
             </div>
 
             <div class="form-group">
               <label class="form-label" for="ai-chat-model">Modelo de Chat (Chat Model)</label>
-              <input id="ai-chat-model" v-model="aiConfig.aiChatModel" type="text" class="form-input"
-                placeholder="Ex: gemini-1.5-flash, gpt-4o-mini ou llama3" />
+              <input
+                id="ai-chat-model"
+                v-model="aiConfig.aiChatModel"
+                type="text"
+                class="form-input"
+                placeholder="Ex: gemini-1.5-flash, gpt-4o-mini ou llama3"
+              />
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="ai-embedding-model">Modelo de Embedding (Embedding Model)</label>
-              <input id="ai-embedding-model" v-model="aiConfig.aiEmbeddingModel" type="text" class="form-input"
-                placeholder="Ex: text-embedding-005, text-embedding-3-small ou nomic-embed-text" />
-              <span class="form-help">Modelo que gera vetores no pgvector. Deve gerar vetores com 768 dimensões (ou
-                diminuído nativamente).</span>
+              <label class="form-label" for="ai-embedding-model"
+                >Modelo de Embedding (Embedding Model)</label
+              >
+              <input
+                id="ai-embedding-model"
+                v-model="aiConfig.aiEmbeddingModel"
+                type="text"
+                class="form-input"
+                placeholder="Ex: text-embedding-005, text-embedding-3-small ou nomic-embed-text"
+              />
+              <span class="form-help"
+                >Modelo que gera vetores no pgvector. Deve gerar vetores com 768 dimensões (ou
+                diminuído nativamente).</span
+              >
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: auto" :disabled="aiConfigLoading">
+            <button
+              type="submit"
+              class="btn btn-primary"
+              style="width: auto"
+              :disabled="aiConfigLoading"
+            >
               {{ aiConfigLoading ? 'Salvando...' : 'Salvar Configurações' }}
             </button>
           </form>
@@ -1515,20 +2276,36 @@ onUnmounted(() => {
           </p>
 
           <!-- Formulário Criar Chave -->
-          <form @submit.prevent="handleCreateApiKey"
-            style="display: flex; gap: 1rem; margin-bottom: 2rem; align-items: flex-end">
+          <form
+            @submit.prevent="handleCreateApiKey"
+            style="display: flex; gap: 1rem; margin-bottom: 2rem; align-items: flex-end"
+          >
             <div class="form-group" style="flex: 1; margin-bottom: 0">
               <label class="form-label" for="key-name">Nome da Chave</label>
-              <input id="key-name" v-model="newKeyName" type="text" class="form-input"
-                placeholder="Ex: Sistema ERP Financeiro" required />
+              <input
+                id="key-name"
+                v-model="newKeyName"
+                type="text"
+                class="form-input"
+                placeholder="Ex: Sistema ERP Financeiro"
+                required
+              />
             </div>
-            <button type="submit" class="btn btn-primary" style="width: auto; height: 42px" :disabled="creatingKey">
+            <button
+              type="submit"
+              class="btn btn-primary"
+              style="width: auto; height: 42px"
+              :disabled="creatingKey"
+            >
               {{ creatingKey ? 'Gerando...' : 'Gerar Chave' }}
             </button>
           </form>
 
           <!-- Tabela de chaves de API -->
-          <div v-if="apiKeys.length === 0" style="text-align: center; color: var(--text-muted); padding: 2rem 0">
+          <div
+            v-if="apiKeys.length === 0"
+            style="text-align: center; color: var(--text-muted); padding: 2rem 0"
+          >
             Nenhuma chave de API ativa encontrada.
           </div>
           <table v-else class="logs-table">
@@ -1545,23 +2322,53 @@ onUnmounted(() => {
                 <td>
                   <strong>{{ key.name }}</strong>
                 </td>
-                <td style="vertical-align: middle;">
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <td style="vertical-align: middle">
+                  <div style="display: flex; align-items: center; gap: 0.5rem">
                     <code style="font-family: var(--font-mono); color: var(--status-connected)">{{
                       revealedKeys[key.id] ? key.key : maskKey(key.key)
                     }}</code>
-                    <button 
-                      type="button" 
-                      style="background: none; border: none; padding: 0.25rem; color: var(--text-secondary); cursor: pointer; display: inline-flex; align-items: center;"
+                    <button
+                      type="button"
+                      style="
+                        background: none;
+                        border: none;
+                        padding: 0.25rem;
+                        color: var(--text-secondary);
+                        cursor: pointer;
+                        display: inline-flex;
+                        align-items: center;
+                      "
                       @click="toggleRevealKey(key.id)"
                       :title="revealedKeys[key.id] ? 'Ocultar Chave' : 'Revelar Chave'"
                     >
-                      <svg v-if="!revealedKeys[key.id]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <svg
+                        v-if="!revealedKeys[key.id]"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                         <circle cx="12" cy="12" r="3"></circle>
                       </svg>
-                      <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                      <svg
+                        v-else
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                        ></path>
                         <line x1="1" y1="1" x2="23" y2="23"></line>
                       </svg>
                     </button>
@@ -1569,8 +2376,11 @@ onUnmounted(() => {
                 </td>
                 <td>{{ formatDate(key.createdAt) }}</td>
                 <td style="text-align: right">
-                  <button class="btn btn-danger" style="width: auto; padding: 0.25rem 0.5rem; font-size: 0.75rem"
-                    @click="handleDeleteApiKey(key.id)">
+                  <button
+                    class="btn btn-danger"
+                    style="width: auto; padding: 0.25rem 0.5rem; font-size: 0.75rem"
+                    @click="handleDeleteApiKey(key.id)"
+                  >
                     Revogar
                   </button>
                 </td>
@@ -1587,20 +2397,25 @@ onUnmounted(() => {
             depuração de integrações.
           </p>
 
-          <div v-if="logsLoading" style="text-align: center; padding: 2rem 0; color: var(--text-secondary)">
+          <div
+            v-if="logsLoading"
+            style="text-align: center; padding: 2rem 0; color: var(--text-secondary)"
+          >
             Carregando registros...
           </div>
 
           <div v-else class="logs-container-split">
             <!-- Coluna de Mensagens Enviadas -->
             <div class="logs-section">
-              <h3 style="
+              <h3
+                style="
                   font-size: 1rem;
                   font-weight: 600;
                   margin-bottom: 1rem;
                   border-left: 3px solid var(--primary-color);
                   padding-left: 0.5rem;
-                ">
+                "
+              >
                 Últimas Mensagens Disparadas
               </h3>
               <div v-if="sentMessages.length === 0" class="logs-empty">
@@ -1608,21 +2423,28 @@ onUnmounted(() => {
               </div>
               <div v-else class="logs-scroll">
                 <div v-for="msg in sentMessages" :key="msg.id" class="log-row-item">
-                  <div style="
+                  <div
+                    style="
                       display: flex;
                       justify-content: space-between;
                       font-size: 0.75rem;
                       color: var(--text-muted);
-                    ">
-                    <span>Para: <strong>{{ msg.recipient.split('@')[0] }}</strong></span>
+                    "
+                  >
+                    <span
+                      >Para: <strong>{{ msg.recipient.split('@')[0] }}</strong></span
+                    >
                     <span>{{ formatDate(msg.createdAt) }}</span>
                   </div>
                   <p style="font-size: 0.85rem; margin-top: 0.25rem; color: var(--text-primary)">
                     {{ msg.content }}
                   </p>
                   <div style="margin-top: 0.35rem">
-                    <span class="badge badge-connected" style="font-size: 0.65rem; padding: 0.15rem 0.35rem">{{
-                      msg.status }}</span>
+                    <span
+                      class="badge badge-connected"
+                      style="font-size: 0.65rem; padding: 0.15rem 0.35rem"
+                      >{{ msg.status }}</span
+                    >
                   </div>
                 </div>
               </div>
@@ -1630,13 +2452,15 @@ onUnmounted(() => {
 
             <!-- Coluna de Webhook Logs -->
             <div class="logs-section">
-              <h3 style="
+              <h3
+                style="
                   font-size: 1rem;
                   font-weight: 600;
                   margin-bottom: 1rem;
                   border-left: 3px solid var(--status-disconnected);
                   padding-left: 0.5rem;
-                ">
+                "
+              >
                 Callbacks e Webhook Logs
               </h3>
               <div v-if="webhookLogs.length === 0" class="logs-empty">
@@ -1644,23 +2468,32 @@ onUnmounted(() => {
               </div>
               <div v-else class="logs-scroll">
                 <div v-for="log in webhookLogs" :key="log.id" class="log-row-item">
-                  <div style="
+                  <div
+                    style="
                       display: flex;
                       justify-content: space-between;
                       font-size: 0.75rem;
                       color: var(--text-muted);
-                    ">
-                    <span>Evento: <strong>{{ log.event }}</strong></span>
+                    "
+                  >
+                    <span
+                      >Evento: <strong>{{ log.event }}</strong></span
+                    >
                     <span>{{ formatDate(log.createdAt) }}</span>
                   </div>
-                  <div style="
+                  <div
+                    style="
                       margin-top: 0.35rem;
                       display: flex;
                       justify-content: space-between;
                       align-items: center;
-                    ">
-                    <span class="badge" :class="log.success ? 'badge-connected' : 'badge-disconnected'"
-                      style="font-size: 0.65rem; padding: 0.15rem 0.35rem">
+                    "
+                  >
+                    <span
+                      class="badge"
+                      :class="log.success ? 'badge-connected' : 'badge-disconnected'"
+                      style="font-size: 0.65rem; padding: 0.15rem 0.35rem"
+                    >
                       {{ log.success ? 'Sucesso' : 'Falha' }} (HTTP {{ log.statusCode || 'N/A' }})
                     </span>
                   </div>
@@ -1674,22 +2507,45 @@ onUnmounted(() => {
 
     <!-- Container de Toasts (Notificações Flutuantes) -->
     <div class="toast-container">
-      <div v-for="toast in toasts" :key="toast.id" class="toast-item" :class="'toast-' + toast.type">
+      <div
+        v-for="toast in toasts"
+        :key="toast.id"
+        class="toast-item"
+        :class="'toast-' + toast.type"
+      >
         <span class="toast-icon">
-          <svg v-if="toast.type === 'success'" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
+          <svg
+            v-if="toast.type === 'success'"
+            width="16"
+            height="16"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
               d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clip-rule="evenodd" />
+              clip-rule="evenodd"
+            />
           </svg>
-          <svg v-else-if="toast.type === 'error'" width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
+          <svg
+            v-else-if="toast.type === 'error'"
+            width="16"
+            height="16"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
               d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clip-rule="evenodd" />
+              clip-rule="evenodd"
+            />
           </svg>
           <svg v-else width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
+            <path
+              fill-rule="evenodd"
               d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-              clip-rule="evenodd" />
+              clip-rule="evenodd"
+            />
           </svg>
         </span>
         <span class="toast-message">{{ toast.message }}</span>
@@ -1710,8 +2566,12 @@ onUnmounted(() => {
           <button class="btn btn-secondary" style="width: auto" @click="confirmModal.onCancel">
             {{ confirmModal.cancelText }}
           </button>
-          <button class="btn" :class="confirmModal.isDanger ? 'btn-danger' : 'btn-primary'" style="width: auto"
-            @click="confirmModal.onConfirm">
+          <button
+            class="btn"
+            :class="confirmModal.isDanger ? 'btn-danger' : 'btn-primary'"
+            style="width: auto"
+            @click="confirmModal.onConfirm"
+          >
             {{ confirmModal.confirmText }}
           </button>
         </div>
