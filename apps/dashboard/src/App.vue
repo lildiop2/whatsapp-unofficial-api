@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import QrcodeVue from 'qrcode.vue';
 
 interface Session {
@@ -81,6 +81,23 @@ const sessions = ref<Session[]>([]);
 const selectedSessionId = ref<string | null>(null);
 const selectedSession = ref<Session | null>(null);
 const creatingSession = ref(false);
+const searchQuery = ref('');
+const statusFilter = ref<'all' | 'CONNECTED' | 'PAIRING_REQUIRED' | 'DISCONNECTED'>('all');
+
+const filteredSessions = computed(() => {
+  return sessions.value.filter(session => {
+    const matchesSearch = session.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                          session.id.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+                          (session.phone && session.phone.includes(searchQuery.value.trim()));
+                          
+    const matchesStatus = statusFilter.value === 'all' || 
+                          (statusFilter.value === 'DISCONNECTED' 
+                            ? (session.status === 'DISCONNECTED' || session.status === 'CONNECTING') 
+                            : session.status === statusFilter.value);
+    
+    return matchesSearch && matchesStatus;
+  });
+});
 const newSession = ref({
   id: '',
   name: '',
@@ -926,6 +943,7 @@ onUnmounted(() => {
             <!-- Lista de Conexões -->
             <div class="card">
               <h2 class="card-title">Instâncias WhatsApp</h2>
+              
               <div v-if="sessions.length === 0" style="
                   color: var(--text-muted);
                   font-size: 0.85rem;
@@ -934,21 +952,89 @@ onUnmounted(() => {
                 ">
                 Nenhuma instância cadastrada.
               </div>
-              <div v-else class="sessions-list">
-                <div v-for="session in sessions" :key="session.id" class="session-item"
-                  :class="{ active: selectedSessionId === session.id }" @click="selectSession(session.id)">
-                  <div class="session-item-info">
-                    <h3>{{ session.name }}</h3>
-                    <p>{{ session.id.slice(0, 8) }}...</p>
+              
+              <div v-else style="display: flex; flex-direction: column; gap: 1rem;">
+                <!-- Filtros e Busca -->
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 0.5rem;">
+                  <div style="position: relative; display: flex; align-items: center; width: 100%;">
+                    <input 
+                      v-model="searchQuery" 
+                      type="text" 
+                      class="form-input" 
+                      placeholder="Buscar por nome, ID ou telefone..." 
+                      style="margin-bottom: 0; padding-left: 2.25rem; font-size: 0.85rem; height: 38px; width: 100%;"
+                    />
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 0.85rem; color: var(--text-muted); pointer-events: none;">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
                   </div>
-                  <span class="badge" :class="{
-                    'badge-connected': session.status === 'CONNECTED',
-                    'badge-pairing': session.status === 'PAIRING_REQUIRED',
-                    'badge-connecting': session.status === 'CONNECTING',
-                    'badge-disconnected': session.status === 'DISCONNECTED',
-                  }">
-                    {{ getStatusLabel(session.status) }}
-                  </span>
+                  
+                  <div style="display: flex; gap: 0.35rem; overflow-x: auto; padding-bottom: 0.25rem; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                    <button 
+                      type="button"
+                      class="btn"
+                      :class="statusFilter === 'all' ? 'btn-primary' : 'btn-secondary'"
+                      style="font-size: 0.7rem; padding: 0.3rem 0.6rem; width: auto; min-width: auto; height: 28px; line-height: 1; border-radius: 6px; white-space: nowrap;"
+                      @click="statusFilter = 'all'"
+                    >
+                      Todas ({{ sessions.length }})
+                    </button>
+                    <button 
+                      type="button"
+                      class="btn"
+                      :class="statusFilter === 'CONNECTED' ? 'btn-primary' : 'btn-secondary'"
+                      style="font-size: 0.7rem; padding: 0.3rem 0.6rem; width: auto; min-width: auto; height: 28px; line-height: 1; border-radius: 6px; white-space: nowrap;"
+                      @click="statusFilter = 'CONNECTED'"
+                    >
+                      Conectadas ({{ sessions.filter(s => s.status === 'CONNECTED').length }})
+                    </button>
+                    <button 
+                      type="button"
+                      class="btn"
+                      :class="statusFilter === 'PAIRING_REQUIRED' ? 'btn-primary' : 'btn-secondary'"
+                      style="font-size: 0.7rem; padding: 0.3rem 0.6rem; width: auto; min-width: auto; height: 28px; line-height: 1; border-radius: 6px; white-space: nowrap;"
+                      @click="statusFilter = 'PAIRING_REQUIRED'"
+                    >
+                      Parear ({{ sessions.filter(s => s.status === 'PAIRING_REQUIRED').length }})
+                    </button>
+                    <button 
+                      type="button"
+                      class="btn"
+                      :class="statusFilter === 'DISCONNECTED' ? 'btn-primary' : 'btn-secondary'"
+                      style="font-size: 0.7rem; padding: 0.3rem 0.6rem; width: auto; min-width: auto; height: 28px; line-height: 1; border-radius: 6px; white-space: nowrap;"
+                      @click="statusFilter = 'DISCONNECTED'"
+                    >
+                      Off ({{ sessions.filter(s => s.status === 'DISCONNECTED' || s.status === 'CONNECTING').length }})
+                    </button>
+                  </div>
+                </div>
+
+                <div v-if="filteredSessions.length === 0" style="
+                    color: var(--text-muted);
+                    font-size: 0.85rem;
+                    text-align: center;
+                    padding: 2rem 0;
+                  ">
+                  Nenhuma instância correspondente encontrada.
+                </div>
+                
+                <div v-else class="sessions-list" style="max-height: 480px; overflow-y: auto; padding-right: 0.25rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                  <div v-for="session in filteredSessions" :key="session.id" class="session-item"
+                    :class="{ active: selectedSessionId === session.id }" @click="selectSession(session.id)">
+                    <div class="session-item-info">
+                      <h3>{{ session.name }}</h3>
+                      <p>{{ session.id.slice(0, 8) }}...</p>
+                    </div>
+                    <span class="badge" :class="{
+                      'badge-connected': session.status === 'CONNECTED',
+                      'badge-pairing': session.status === 'PAIRING_REQUIRED',
+                      'badge-connecting': session.status === 'CONNECTING',
+                      'badge-disconnected': session.status === 'DISCONNECTED',
+                    }">
+                      {{ getStatusLabel(session.status) }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
