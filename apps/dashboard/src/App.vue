@@ -1361,9 +1361,10 @@ onUnmounted(() => {
               </div>
             </div>
           </div>
-          
-          <!-- MODO GRID VIEW (Visualização em Grade de Alta Densidade) -->
-          <div v-else>
+        </div>
+        
+        <!-- MODO GRID VIEW (Visualização em Grade de Alta Densidade) -->
+        <div v-else>
             <div v-if="filteredSessions.length === 0" style="
                 background-color: var(--bg-card);
                 border: 1px solid var(--border);
