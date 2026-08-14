@@ -11,6 +11,9 @@ import { prisma } from './prisma.service.js';
 import { SessionStatus } from '@zap/shared';
 import { queueService } from './queue.service.js';
 import { storageService } from './storage.service.js';
+import { createMediaProcessor } from '@zapo-js/media-utils';
+
+const mediaProcessor = createMediaProcessor();
 
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
@@ -143,6 +146,9 @@ class ZapoSessionManager {
         sessionId,
         // Recuperar de versões desatualizadas de forma automática
         recoverFromClientTooOld: true,
+        media: {
+          processor: mediaProcessor,
+        },
       },
       new PinoLogger(logger.child({ sessionId }) as any, (process.env.LOG_LEVEL as any) || 'info'),
     );
