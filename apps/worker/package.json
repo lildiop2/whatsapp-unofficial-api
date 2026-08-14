@@ -22,7 +22,8 @@
     "amqplib": "^0.10.3",
     "dotenv": "^16.4.5",
     "pg": "^8.23.0",
-    "pino": "^8.19.0"
+    "pino": "^8.19.0",
+    "pino-roll": "^4.0.0"
   },
   "devDependencies": {
     "@types/amqplib": "^0.10.5",

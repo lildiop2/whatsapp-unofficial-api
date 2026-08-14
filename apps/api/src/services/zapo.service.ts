@@ -13,12 +13,33 @@ import { queueService } from './queue.service.js';
 
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
-  transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
+  base: null,
+  timestamp: false,
+  transport: process.env.NODE_ENV !== 'production' ? {
+    targets: [
+      {
+        target: 'pino-pretty',
+        options: { destination: 1 },
+        level: process.env.LOG_LEVEL || 'info',
+      },
+      {
+        target: 'pino-roll',
+        options: {
+          file: './logs/zapo',
+          frequency: 'daily',
+          size: '10m',
+          mkdir: true,
+        },
+        level: process.env.LOG_LEVEL || 'info',
+      }
+    ]
+  } : undefined,
 });
 
 class ZapoSessionManager {
   private clients = new Map<string, WaClient>();
   private sessionQrs = new Map<string, string>();
+  private sessionPairingCodes = new Map<string, string>();
   private pgPool: Pool | null = null;
 
   constructor() {
@@ -137,17 +158,77 @@ class ZapoSessionManager {
    * Configura os listeners de eventos essenciais do WaClient
    */
   private setupEventListeners(sessionId: string, client: WaClient) {
+    const handlePairingTrigger = async () => {
+      try {
+        const session = await prisma.whatsappSession.findUnique({
+          where: { id: sessionId },
+        });
+
+        if (session && session.phone) {
+          if (this.sessionPairingCodes.has(sessionId)) {
+            logger.debug(`Pairing Code já gerado para a sessão ${sessionId}`);
+            return;
+          }
+          logger.info(`Requisitando Pairing Code para o número ${session.phone}...`);
+          const code = await client.auth.requestPairingCode(session.phone);
+          logger.info(`Pairing Code gerado com sucesso: ${code}`);
+          this.sessionPairingCodes.set(sessionId, code);
+          await prisma.whatsappSession.updateMany({
+            where: { id: sessionId },
+            data: {
+              pairingCode: code,
+              status: 'PAIRING_REQUIRED',
+            },
+          });
+        } else {
+          await this.updateSessionStatus(sessionId, 'PAIRING_REQUIRED');
+        }
+      } catch (err: any) {
+        logger.error(err, `Erro ao processar Pairing Code para a sessão ${sessionId}`);
+        await this.updateSessionStatus(sessionId, 'PAIRING_REQUIRED');
+      }
+    };
+
     // Escutar por QRs para emparelhamento
     client.on('auth_qr', ({ qr }) => {
       logger.info(`Novo QR Code disponível para a sessão ${sessionId}`);
       this.sessionQrs.set(sessionId, qr);
-      this.updateSessionStatus(sessionId, 'PAIRING_REQUIRED');
+      handlePairingTrigger().catch(() => {});
+    });
+
+    // Escutar por necessidade de emparelhamento por código (Link Code)
+    client.on('auth_pairing_required', ({ forceManual }) => {
+      logger.info(`Pairing Code requerido para a sessão ${sessionId}. ForceManual: ${forceManual}`);
+      handlePairingTrigger().catch(() => {});
+    });
+
+    // Escutar por geração do pairing code
+    client.on('auth_pairing_code', async ({ code }) => {
+      logger.info(`Pairing Code gerado via evento para a sessão ${sessionId}: ${code}`);
+      this.sessionPairingCodes.set(sessionId, code);
+      await prisma.whatsappSession.updateMany({
+        where: { id: sessionId },
+        data: { pairingCode: code },
+      });
     });
 
     // Escutar por sucesso de emparelhamento
-    client.on('auth_paired', ({ credentials }) => {
-      logger.info(`Sessão ${sessionId} emparelhada com sucesso para o JID: ${credentials.meJid}`);
+    client.on('auth_paired', async ({ credentials }) => {
+      const meJid = credentials?.meJid;
+      logger.info(`Sessão ${sessionId} emparelhada com sucesso para o JID: ${meJid}`);
       this.sessionQrs.delete(sessionId);
+      this.sessionPairingCodes.delete(sessionId);
+
+      const phone = meJid ? meJid.split('@')[0] : null;
+      await prisma.whatsappSession.updateMany({
+        where: { id: sessionId },
+        data: {
+          phone,
+          meJid,
+          pairingCode: null,
+          status: 'CONNECTED',
+        },
+      });
     });
 
     // Escutar por mudanças de status de conexão
@@ -155,9 +236,29 @@ class ZapoSessionManager {
       if (event.status === 'open') {
         logger.info(`Conexão aberta com sucesso para a sessão ${sessionId}`);
         this.sessionQrs.delete(sessionId);
-        await this.updateSessionStatus(sessionId, 'CONNECTED');
+        this.sessionPairingCodes.delete(sessionId);
+
+        // Recuperar informações adicionais da sessão ao logar
+        const credentials = client.getCredentials();
+        const meJid = credentials?.meJid || null;
+        const phone = meJid ? meJid.split('@')[0] : null;
+
+        await prisma.whatsappSession.updateMany({
+          where: { id: sessionId },
+          data: {
+            status: 'CONNECTED',
+            meJid,
+            phone,
+            pairingCode: null,
+          },
+        });
+
         queueService
-          .publishWebhook(sessionId, 'connection', { status: 'CONNECTED' })
+          .publishWebhook(sessionId, 'connection', {
+            status: 'CONNECTED',
+            phone,
+            meJid,
+          })
           .catch(() => {});
       } else if (event.status === 'close') {
         logger.warn(
@@ -167,8 +268,17 @@ class ZapoSessionManager {
         if (event.isLogout) {
           logger.error(`Sessão ${sessionId} foi desvinculada pelo usuário. Limpando dados...`);
           this.sessionQrs.delete(sessionId);
+          this.sessionPairingCodes.delete(sessionId);
           this.clients.delete(sessionId);
-          await this.updateSessionStatus(sessionId, 'DISCONNECTED');
+          await prisma.whatsappSession.updateMany({
+            where: { id: sessionId },
+            data: {
+              status: 'DISCONNECTED',
+              phone: null,
+              meJid: null,
+              pairingCode: null,
+            },
+          });
           queueService
             .publishWebhook(sessionId, 'connection', { status: 'DISCONNECTED', isLogout: true })
             .catch(() => {});
@@ -223,7 +333,7 @@ class ZapoSessionManager {
    */
   private async updateSessionStatus(sessionId: string, status: SessionStatus) {
     try {
-      await prisma.whatsappSession.update({
+      await prisma.whatsappSession.updateMany({
         where: { id: sessionId },
         data: { status },
       });
@@ -248,6 +358,13 @@ class ZapoSessionManager {
   }
 
   /**
+   * Retorna o Pairing Code ativo da sessão para exibição no painel
+   */
+  getSessionPairingCode(sessionId: string): string | undefined {
+    return this.sessionPairingCodes.get(sessionId);
+  }
+
+  /**
    * Desconecta graciosamente uma sessão mantendo as credenciais
    */
   async disconnectSession(sessionId: string) {
@@ -262,6 +379,7 @@ class ZapoSessionManager {
     } finally {
       this.clients.delete(sessionId);
       this.sessionQrs.delete(sessionId);
+      this.sessionPairingCodes.delete(sessionId);
       await this.updateSessionStatus(sessionId, 'DISCONNECTED');
     }
   }
@@ -281,7 +399,16 @@ class ZapoSessionManager {
     } finally {
       this.clients.delete(sessionId);
       this.sessionQrs.delete(sessionId);
-      await this.updateSessionStatus(sessionId, 'DISCONNECTED');
+      this.sessionPairingCodes.delete(sessionId);
+      await prisma.whatsappSession.update({
+        where: { id: sessionId },
+        data: {
+          status: 'DISCONNECTED',
+          phone: null,
+          meJid: null,
+          pairingCode: null,
+        },
+      });
     }
   }
 

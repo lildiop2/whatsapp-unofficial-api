@@ -7,6 +7,8 @@ import { prisma } from './prisma.service.js';
 
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
+  base: null,
+  timestamp: false,
   transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
 });
 
@@ -205,7 +207,11 @@ class RagService {
   /**
    * Executa a IA com Langgraph baseado no histórico semântico recuperado (RAG) e regras do Tenant.
    */
-  async runAgent(sessionId: string, incomingMessage: string): Promise<string> {
+  async runAgent(
+    sessionId: string,
+    incomingMessage: string,
+    customSystemPrompt?: string,
+  ): Promise<string> {
     const config = await this.getTenantConfig(sessionId);
 
     try {
@@ -226,10 +232,9 @@ class RagService {
 
       // 3. Nó de Geração da Resposta (Generation)
       const generateNode = async (state: typeof AgentState.State) => {
-        const prompt = `
-Você é um atendente inteligente e prestativo de suporte automatizado no WhatsApp.
-O usuário enviou a mensagem: "${state.incomingMessage}".
-
+        const systemPrompt =
+          customSystemPrompt ||
+          `Você é um atendente inteligente e prestativo de suporte automatizado no WhatsApp.
 Abaixo está o histórico de mensagens semelhantes encontradas no banco de dados para contexto (RAG):
 ${state.context || '(Nenhum histórico encontrado)'}
 
@@ -237,7 +242,12 @@ Instruções:
 - Responda de forma direta, clara e curta (tamanho apropriado para WhatsApp).
 - Utilize o contexto anterior se ele ajudar a responder à pergunta do cliente.
 - Se não souber a resposta ou não houver contexto útil, seja empático e diga que irá transferir para um atendente humano.
-- Não invente informações fictícias.
+- Não invente informações fictícias.`;
+
+        const prompt = `
+${systemPrompt}
+
+O usuário enviou a mensagem: "${state.incomingMessage}"
 
 Resposta do Assistente:
 `;

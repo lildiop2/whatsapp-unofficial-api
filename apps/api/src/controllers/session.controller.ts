@@ -4,7 +4,7 @@ import { prisma } from '../services/prisma.service.js';
 import { TenantRequest } from '../types/index.js';
 
 export const createSession = async (req: TenantRequest, res: Response) => {
-  const { id, name, webhookUrl } = req.body;
+  const { id, name, webhookUrl, phone, webhookEvents, botEnabled, botConfig } = req.body;
   const tenantId = req.tenantId!;
 
   if (!name) {
@@ -30,6 +30,10 @@ export const createSession = async (req: TenantRequest, res: Response) => {
         tenantId,
         name,
         webhookUrl,
+        phone,
+        webhookEvents: webhookEvents || ['all'],
+        botEnabled: botEnabled || false,
+        botConfig: botConfig || null,
         status: 'DISCONNECTED',
       },
     });
@@ -60,6 +64,39 @@ export const listSessions = async (req: TenantRequest, res: Response) => {
   }
 };
 
+export const updateSession = async (req: TenantRequest, res: Response) => {
+  const { id } = req.params;
+  const tenantId = req.tenantId!;
+  const { name, phone, webhookUrl, webhookEvents, botEnabled, botConfig } = req.body;
+
+  try {
+    const session = await prisma.whatsappSession.findUnique({
+      where: { id },
+    });
+
+    if (!session || session.tenantId !== tenantId) {
+      return res.status(444).json({ error: `Sessão ${id} não encontrada ou sem permissão.` });
+    }
+
+    const updated = await prisma.whatsappSession.update({
+      where: { id },
+      data: {
+        name,
+        phone,
+        webhookUrl,
+        webhookEvents,
+        botEnabled,
+        botConfig: botConfig !== undefined ? botConfig : undefined,
+      },
+    });
+
+    return res.json(updated);
+  } catch (err: any) {
+    console.error(`Erro ao atualizar sessão ${id}:`, err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
 export const getSessionStatus = async (req: TenantRequest, res: Response) => {
   const { id } = req.params;
   const tenantId = req.tenantId!;
@@ -74,14 +111,21 @@ export const getSessionStatus = async (req: TenantRequest, res: Response) => {
     }
 
     const qr = zapoSessionManager.getSessionQr(id);
+    const pairingCode = zapoSessionManager.getSessionPairingCode(id);
     const client = zapoSessionManager.getClient(id);
 
     return res.json({
       id: session.id,
       name: session.name,
       status: session.status,
+      phone: session.phone,
+      meJid: session.meJid,
       webhookUrl: session.webhookUrl,
+      webhookEvents: session.webhookEvents,
+      botEnabled: session.botEnabled,
+      botConfig: session.botConfig,
       qrCode: qr || null,
+      pairingCode: pairingCode || session.pairingCode || null,
       isConnected: client?.getState()?.connected || false,
     });
   } catch (err: any) {

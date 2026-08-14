@@ -7,7 +7,27 @@ const env = validateEnv(process.env);
 
 const logger = pino({
   level: env.LOG_LEVEL,
-  transport: env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
+  base: null,
+  timestamp: false,
+  transport: env.NODE_ENV !== 'production' ? {
+    targets: [
+      {
+        target: 'pino-pretty',
+        options: { destination: 1 },
+        level: env.LOG_LEVEL,
+      },
+      {
+        target: 'pino-roll',
+        options: {
+          file: './logs/api',
+          frequency: 'daily',
+          size: '10m',
+          mkdir: true,
+        },
+        level: env.LOG_LEVEL,
+      }
+    ]
+  } : undefined,
 });
 
 import sessionRoutes from './routes/session.routes.js';
