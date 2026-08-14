@@ -394,7 +394,8 @@ const fetchSessionStatus = async (id: string) => {
 
     const idx = sessions.value.findIndex(s => s.id === id);
     if (idx !== -1) {
-      sessions.value[idx].status = details.status;
+      // Atualiza todas as propriedades para manter a lista sincronizada com as configurações salvas
+      sessions.value[idx] = { ...sessions.value[idx], ...details };
     }
   } catch (err: any) {
     console.error(`Erro ao buscar status da sessão ${id}:`, err.message);
@@ -407,6 +408,14 @@ const selectSession = (id: string) => {
   const found = sessions.value.find(s => s.id === id);
   if (found) {
     selectedSession.value = found;
+    // Sincronizar inputs ao selecionar para evitar sobrescritas pelo polling
+    webhookEventsInput.value = found.webhookEvents ? found.webhookEvents.join(', ') : 'all';
+    const config = found.botConfig || {};
+    botConfigInput.value = {
+      type: config.type || 'simple',
+      prompt: config.prompt || '',
+    };
+    botRulesJsonInput.value = config.rules ? JSON.stringify(config.rules, null, 2) : '[]';
   }
   fetchSessionStatus(id);
   testMessage.value = { to: '', text: '', sending: false, status: null, message: '' };
@@ -449,19 +458,6 @@ const handleCreateSession = async () => {
     creatingSession.value = false;
   }
 };
-
-// Monitorar a sessão selecionada para sincronizar inputs
-watch(selectedSession, newVal => {
-  if (newVal) {
-    webhookEventsInput.value = newVal.webhookEvents ? newVal.webhookEvents.join(', ') : 'all';
-    const config = newVal.botConfig || {};
-    botConfigInput.value = {
-      type: config.type || 'simple',
-      prompt: config.prompt || '',
-    };
-    botRulesJsonInput.value = config.rules ? JSON.stringify(config.rules, null, 2) : '[]';
-  }
-});
 
 // Instâncias: Atualizar Configurações (Webhook e Bot)
 const handleUpdateSession = async () => {

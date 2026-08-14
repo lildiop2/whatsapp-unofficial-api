@@ -81,13 +81,19 @@ app.use('/tenant', tenantRoutes);
 app.use('/sessions', authenticateHybrid, sessionRoutes);
 app.use('/sessions/:sessionId', authenticateHybrid, managementRoutes);
 app.use('/messages', authenticateHybrid, messageRoutes);
+app.use('/webhooks', (req, res) => {
+  logger.debug('Webhook endpoint called');
+  logger.debug(`Webhook payload: ${JSON.stringify(req.body)}`);
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+  });
+});
 
 app.get('/health', (req, res) => {
-  const status: SessionStatus = 'DISCONNECTED';
   logger.debug('Health check endpoint called');
   res.json({
     status: 'OK',
-    zapoStatus: status,
     timestamp: new Date().toISOString(),
   });
 });
