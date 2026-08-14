@@ -32,6 +32,7 @@ const logger = pino({
 
 import sessionRoutes from './routes/session.routes.js';
 import messageRoutes from './routes/message.routes.js';
+import managementRoutes from './routes/management.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import tenantRoutes from './routes/tenant.routes.js';
 import { zapoSessionManager } from './services/zapo.service.js';
@@ -75,6 +76,7 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/auth', authRoutes);
 app.use('/tenant', tenantRoutes);
 app.use('/sessions', authenticateHybrid, sessionRoutes);
+app.use('/sessions/:sessionId', authenticateHybrid, managementRoutes);
 app.use('/messages', authenticateHybrid, messageRoutes);
 
 app.get('/health', (req, res) => {
