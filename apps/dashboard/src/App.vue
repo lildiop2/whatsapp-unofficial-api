@@ -6,7 +6,13 @@ interface Session {
   id: string;
   name: string;
   status: 'DISCONNECTED' | 'PAIRING_REQUIRED' | 'CONNECTING' | 'CONNECTED';
+  phone?: string | null;
+  meJid?: string | null;
+  pairingCode?: string | null;
   webhookUrl: string | null;
+  webhookEvents?: string[];
+  botEnabled?: boolean;
+  botConfig?: any;
   qrCode?: string | null;
   isConnected?: boolean;
 }
@@ -80,6 +86,13 @@ const newSession = ref({
   name: '',
   webhookUrl: '',
 });
+
+const webhookEventsInput = ref('');
+const botConfigInput = ref<{ type: string; prompt?: string }>({ type: 'simple', prompt: '' });
+const botRulesJsonInput = ref('');
+const updatingSession = ref(false);
+const connectionMode = ref<'qr' | 'pairing'>('qr');
+const pairingPhone = ref('');
 const testMessage = ref({
   to: '',
   text: '',
@@ -103,6 +116,17 @@ const aiConfigSuccess = ref(false);
 const apiKeys = ref<ApiKey[]>([]);
 const newKeyName = ref('');
 const creatingKey = ref(false);
+const revealedKeys = ref<Record<string, boolean>>({});
+const toggleRevealKey = (id: string) => {
+  revealedKeys.value[id] = !revealedKeys.value[id];
+};
+const maskKey = (val: string) => {
+  if (!val) return '';
+  if (val.startsWith('zap_')) {
+    return 'zap_' + '•'.repeat(24);
+  }
+  return '•'.repeat(24);
+};
 
 // Estados de Histórico & Logs
 const sentMessages = ref<SentMessage[]>([]);
@@ -360,6 +384,7 @@ const handleCreateSession = async () => {
       body: JSON.stringify({
         id: newSession.value.id.trim() || undefined,
         name: newSession.value.name.trim(),
+        phone: connectionMode.value === 'pairing' ? pairingPhone.value.trim() : undefined,
         webhookUrl: newSession.value.webhookUrl.trim() || undefined,
       }),
     });
@@ -368,6 +393,8 @@ const handleCreateSession = async () => {
     if (!res.ok) throw new Error(data.error || 'Erro ao criar sessão.');
 
     newSession.value = { id: '', name: '', webhookUrl: '' };
+    pairingPhone.value = '';
+    connectionMode.value = 'qr';
     await fetchSessions();
     selectSession(data.id);
     showToast('Instância criada com sucesso.', 'success');
@@ -375,6 +402,66 @@ const handleCreateSession = async () => {
     showToast(err.message, 'error');
   } finally {
     creatingSession.value = false;
+  }
+};
+
+// Monitorar a sessão selecionada para sincronizar inputs
+watch(selectedSession, (newVal) => {
+  if (newVal) {
+    webhookEventsInput.value = newVal.webhookEvents ? newVal.webhookEvents.join(', ') : 'all';
+    const config = newVal.botConfig || {};
+    botConfigInput.value = {
+      type: config.type || 'simple',
+      prompt: config.prompt || '',
+    };
+    botRulesJsonInput.value = config.rules ? JSON.stringify(config.rules, null, 2) : '[]';
+  }
+});
+
+// Instâncias: Atualizar Configurações (Webhook e Bot)
+const handleUpdateSession = async () => {
+  if (!selectedSession.value) return;
+  updatingSession.value = true;
+
+  let botConfig: any = { type: botConfigInput.value.type };
+  if (botConfigInput.value.type === 'simple') {
+    try {
+      botConfig.rules = JSON.parse(botRulesJsonInput.value || '[]');
+    } catch (err) {
+      showToast('Formato JSON de regras inválido!', 'error');
+      updatingSession.value = false;
+      return;
+    }
+  } else {
+    botConfig.prompt = botConfigInput.value.prompt;
+  }
+
+  const events = webhookEventsInput.value
+    .split(',')
+    .map(e => e.trim())
+    .filter(e => e.length > 0);
+
+  try {
+    const res = await fetch(`${API_BASE}/sessions/${selectedSession.value.id}`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({
+        webhookUrl: selectedSession.value.webhookUrl || null,
+        webhookEvents: events,
+        botEnabled: selectedSession.value.botEnabled,
+        botConfig,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Erro ao salvar configurações.');
+
+    showToast('Configurações da instância salvas com sucesso!', 'success');
+    await fetchSessionStatus(selectedSession.value.id);
+  } catch (err: any) {
+    showToast(err.message, 'error');
+  } finally {
+    updatingSession.value = false;
   }
 };
 
@@ -818,6 +905,18 @@ onUnmounted(() => {
                   <input id="session-webhook" v-model="newSession.webhookUrl" type="url" class="form-input"
                     placeholder="https://exemplo.com/callback" />
                 </div>
+                <div class="form-group">
+                  <label class="form-label" for="connection-mode">Método de Conexão</label>
+                  <select id="connection-mode" v-model="connectionMode" class="form-input">
+                    <option value="qr">QR Code (Escaneamento)</option>
+                    <option value="pairing">Pairing Code (Número de Telefone)</option>
+                  </select>
+                </div>
+                <div v-if="connectionMode === 'pairing'" class="form-group">
+                  <label class="form-label" for="pairing-phone">Telefone (com DDI e DDD, apenas números)</label>
+                  <input id="pairing-phone" v-model="pairingPhone" type="text" class="form-input"
+                    placeholder="Ex: 5511999999999" required />
+                </div>
                 <button type="submit" class="btn btn-primary" :disabled="creatingSession">
                   {{ creatingSession ? 'Criando...' : 'Criar Instância' }}
                 </button>
@@ -892,30 +991,67 @@ onUnmounted(() => {
                 </span>
               </div>
 
-              <div class="session-metadata-grid">
+              <div class="session-metadata-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
                 <div class="metadata-item">
                   <div class="metadata-item-label">Webhook URL</div>
                   <div class="metadata-item-value metadata-item-value-mono">
                     {{ selectedSession.webhookUrl || '(Sem webhook)' }}
                   </div>
                 </div>
+                <div class="metadata-item">
+                  <div class="metadata-item-label">Número Conectado</div>
+                  <div class="metadata-item-value">
+                    {{ selectedSession.phone || '(Não pareado)' }}
+                  </div>
+                </div>
+                <div class="metadata-item">
+                  <div class="metadata-item-label">Bot de Auto-Resposta</div>
+                  <div class="metadata-item-value">
+                    <span :style="{ color: selectedSession.botEnabled ? 'var(--status-connected)' : 'var(--text-muted)' }">
+                      {{ selectedSession.botEnabled ? 'Ativado' : 'Desativado' }}
+                    </span>
+                  </div>
+                </div>
+                <div class="metadata-item">
+                  <div class="metadata-item-label">Filtros de Eventos Webhook</div>
+                  <div class="metadata-item-value">
+                    {{ selectedSession.webhookEvents ? selectedSession.webhookEvents.join(', ') : 'all' }}
+                  </div>
+                </div>
               </div>
 
-              <!-- Pareamento Requerido (QR Code) -->
+              <!-- Pareamento Requerido (QR Code ou Pairing Code) -->
               <div v-if="selectedSession.status === 'PAIRING_REQUIRED'" class="qr-container">
-                <div v-if="selectedSession.qrCode" class="qr-box">
-                  <QrcodeVue :value="selectedSession.qrCode" :size="220" level="M" />
+                <!-- Se for pairing code -->
+                <div v-if="selectedSession.pairingCode || selectedSession.phone" style="width: 100%;">
+                  <div v-if="selectedSession.pairingCode" class="pairing-code-box" style="margin-top: 1rem; margin-bottom: 2rem; text-align: center; background-color: var(--bg-hover); border: 1px dashed var(--border-color); padding: 1.5rem; border-radius: 12px;">
+                    <h3 style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 600;">Código de Pareamento (Pairing Code)</h3>
+                    <div style="font-family: var(--font-mono); font-size: 2.25rem; font-weight: 700; letter-spacing: 4px; color: var(--primary-color);">
+                      {{ selectedSession.pairingCode }}
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem; max-width: 340px; margin-inline: auto;">
+                      Insira este código na notificação do seu celular (ou em "Aparelhos Conectados" > "Conectar com número de telefone").
+                    </p>
+                  </div>
+                  <div v-else style="padding: 2rem 0; text-align: center; color: var(--text-muted)">
+                    Aguardando geração do Código de Pareamento pelo WhatsApp...
+                  </div>
                 </div>
-                <div v-else style="padding: 2rem 0; color: var(--text-muted)">
-                  Aguardando geração do QR Code pelo WhatsApp...
+                <!-- Se for QR Code -->
+                <div v-else style="width: 100%;">
+                  <div v-if="selectedSession.qrCode" class="qr-box">
+                    <QrcodeVue :value="selectedSession.qrCode" :size="220" level="M" />
+                  </div>
+                  <div v-else style="padding: 2rem 0; text-align: center; color: var(--text-muted)">
+                    Aguardando geração do QR Code pelo WhatsApp...
+                  </div>
+                  <h3 style="font-weight: 600; margin-bottom: 0.25rem; text-align: center;">
+                    Escaneie o QR Code no seu celular
+                  </h3>
+                  <p style="font-size: 0.85rem; color: var(--text-secondary); max-width: 400px; margin-inline: auto; text-align: center;">
+                    Vá em Aparelhos Conectados no seu WhatsApp e clique em Conectar Aparelho para parear.
+                  </p>
                 </div>
-                <h3 style="font-weight: 600; margin-bottom: 0.25rem">
-                  Escaneie o QR Code no seu celular
-                </h3>
-                <p style="font-size: 0.85rem; color: var(--text-secondary); max-width: 400px">
-                  Vá em Aparelhos Conectados no seu WhatsApp e clique em Conectar Aparelho para
-                  parear.
-                </p>
               </div>
 
               <!-- Conectado -->
@@ -938,13 +1074,13 @@ onUnmounted(() => {
                 <div>
                   <h3 style="font-size: 0.95rem; font-weight: 600">Instância WhatsApp Online</h3>
                   <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem">
-                    Esta instância está emparelhada. O bot responderá automaticamente mensagens
-                    baseado no motor RAG/LLM do seu tenant.
+                    Esta instância está emparelhada com o número <strong>{{ selectedSession.phone }}</strong>.
+                    O bot de auto-resposta responderá automaticamente baseado nas configurações configuradas abaixo.
                   </p>
                 </div>
               </div>
 
-              <!-- Ações -->
+              <!-- Ações da Instância -->
               <div style="display: flex; gap: 1rem; margin-top: 1rem">
                 <button v-if="selectedSession.status === 'CONNECTED'" class="btn btn-secondary" style="width: auto"
                   @click="handleDisconnect(selectedSession.id)">
@@ -954,6 +1090,63 @@ onUnmounted(() => {
                   @click="handleSessionLogout(selectedSession.id)">
                   Excluir e Resetar Conexão
                 </button>
+              </div>
+
+              <!-- CONFIGURAÇÕES DA INSTÂNCIA (Webhook & Bot) -->
+              <div style="margin-top: 2.5rem; border-top: 1px solid var(--border-color); padding-top: 2rem;">
+                <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem">
+                  Configurações da Instância
+                </h3>
+                <form @submit.prevent="handleUpdateSession">
+                  <div class="form-group">
+                    <label class="form-label" for="edit-webhook-url">Webhook URL</label>
+                    <input id="edit-webhook-url" v-model="selectedSession.webhookUrl" type="url" class="form-input"
+                      placeholder="https://exemplo.com/callback" />
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-label" for="edit-webhook-events">Eventos do Webhook (separados por vírgula)</label>
+                    <input id="edit-webhook-events" v-model="webhookEventsInput" type="text" class="form-input"
+                      placeholder="all, message, connection" />
+                    <span class="form-help">Use 'all' para todos os eventos ou selecione eventos específicos como 'message', 'connection'.</span>
+                  </div>
+
+                  <div class="form-group" style="margin-top: 1.5rem;">
+                    <label class="form-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 600;">
+                      <input type="checkbox" v-model="selectedSession.botEnabled" style="width: 16px; height: 16px;" />
+                      Ativar Bot de Auto-Resposta
+                    </label>
+                  </div>
+
+                  <div v-if="selectedSession.botEnabled" class="bot-config-block" style="background-color: var(--bg-hover); padding: 1.25rem; border-radius: 8px; margin-top: 0.75rem; border: 1px solid var(--border-color);">
+                    <div class="form-group">
+                      <label class="form-label" for="edit-bot-type">Tipo de Bot</label>
+                      <select id="edit-bot-type" v-model="botConfigInput.type" class="form-input">
+                        <option value="simple">Simple (Regras de palavras-chave / Keywords)</option>
+                        <option value="ai">AI Agent (Motor RAG Langgraph + Prompt de IA)</option>
+                      </select>
+                    </div>
+
+                    <div v-if="botConfigInput.type === 'simple'" class="form-group">
+                      <label class="form-label" for="edit-bot-rules">Regras do Bot (Formato JSON)</label>
+                      <textarea id="edit-bot-rules" v-model="botRulesJsonInput" class="form-input" rows="5"
+                        style="font-family: var(--font-mono); font-size: 0.8rem;"
+                        placeholder='[\n  { "trigger": "oi", "response": "Olá! Como posso ajudar?" },\n  { "trigger": "ajuda", "response": "Por favor, descreva sua dúvida." }\n]'></textarea>
+                      <span class="form-help">Insira um array JSON válido de objetos com "trigger" e "response".</span>
+                    </div>
+
+                    <div v-if="botConfigInput.type === 'ai'" class="form-group">
+                      <label class="form-label" for="edit-bot-prompt">Prompt da IA (Instruções e Regras)</label>
+                      <textarea id="edit-bot-prompt" v-model="botConfigInput.prompt" class="form-input" rows="5"
+                        placeholder="Ex: Você é um assistente virtual atencioso que trabalha na Empresa X..."></textarea>
+                      <span class="form-help">Estas regras guiarão a geração de respostas do assistente inteligente (RAG).</span>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary" style="width: auto; margin-top: 1rem;" :disabled="updatingSession">
+                    {{ updatingSession ? 'Salvando...' : 'Salvar Configurações' }}
+                  </button>
+                </form>
               </div>
 
               <!-- Disparo de Mensagem de Teste -->
@@ -1086,10 +1279,27 @@ onUnmounted(() => {
                 <td>
                   <strong>{{ key.name }}</strong>
                 </td>
-                <td>
-                  <code style="font-family: var(--font-mono); color: var(--status-connected)">{{
-                    key.key
-                  }}</code>
+                <td style="vertical-align: middle;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <code style="font-family: var(--font-mono); color: var(--status-connected)">{{
+                      revealedKeys[key.id] ? key.key : maskKey(key.key)
+                    }}</code>
+                    <button 
+                      type="button" 
+                      style="background: none; border: none; padding: 0.25rem; color: var(--text-secondary); cursor: pointer; display: inline-flex; align-items: center;"
+                      @click="toggleRevealKey(key.id)"
+                      :title="revealedKeys[key.id] ? 'Ocultar Chave' : 'Revelar Chave'"
+                    >
+                      <svg v-if="!revealedKeys[key.id]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                      <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                      </svg>
+                    </button>
+                  </div>
                 </td>
                 <td>{{ formatDate(key.createdAt) }}</td>
                 <td style="text-align: right">

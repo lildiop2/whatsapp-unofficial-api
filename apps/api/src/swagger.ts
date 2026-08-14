@@ -240,10 +240,37 @@ export const swaggerDocument = {
                     description: 'Nome da instância',
                     example: 'Suporte Principal',
                   },
+                  phone: {
+                    type: 'string',
+                    description: 'Telefone para conexão via Pairing Code (se omitido, gera QR Code)',
+                    example: '5511999999999',
+                  },
                   webhookUrl: {
                     type: 'string',
                     format: 'uri',
                     example: 'https://api.empresa.com/callback',
+                  },
+                  webhookEvents: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Lista de eventos que disparam o webhook (ex: ["message", "connection"] ou ["all"])',
+                    example: ['all'],
+                  },
+                  botEnabled: {
+                    type: 'boolean',
+                    description: 'Ativar ou desativar o bot de auto-resposta',
+                    example: false,
+                  },
+                  botConfig: {
+                    type: 'object',
+                    description: 'Configuração do bot (simple para resposta baseada em palavra-chave, ai para assistente Gemini/Ollama)',
+                    example: {
+                      type: 'simple',
+                      rules: [
+                        { trigger: 'oi', response: 'Olá! Como posso ajudar você?' },
+                        { trigger: 'ajuda', response: 'Por favor, descreva seu problema.' },
+                      ],
+                    },
                   },
                 },
               },
@@ -252,6 +279,51 @@ export const swaggerDocument = {
         },
         responses: {
           '201': { description: 'Instância criada com sucesso.' },
+        },
+      },
+    },
+    '/sessions/{id}': {
+      patch: {
+        summary: 'Atualizar configurações de webhook e bot da instância',
+        tags: ['Instâncias WhatsApp'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', example: 'Suporte Principal Atualizado' },
+                  phone: { type: 'string', example: '5511999999999' },
+                  webhookUrl: { type: 'string', format: 'uri', example: 'https://api.empresa.com/callback' },
+                  webhookEvents: { type: 'array', items: { type: 'string' }, example: ['message', 'connection'] },
+                  botEnabled: { type: 'boolean', example: true },
+                  botConfig: {
+                    type: 'object',
+                    properties: {
+                      type: { type: 'string', enum: ['simple', 'ai'], example: 'ai' },
+                      prompt: { type: 'string', example: 'Você é o assistente virtual de vendas...' },
+                      rules: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            trigger: { type: 'string', example: 'oi' },
+                            response: { type: 'string', example: 'Olá!' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': { description: 'Instância atualizada com sucesso.' },
         },
       },
     },

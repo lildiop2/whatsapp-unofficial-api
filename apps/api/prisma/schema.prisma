@@ -60,17 +60,23 @@ model User {
 }
 
 model WhatsappSession {
-  id          String             @id @default(uuid()) // sessionId correspondente no Zapo
-  tenantId    String
-  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  name        String
-  status      SessionStatus      @default(DISCONNECTED)
-  webhookUrl  String?
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
-  webhookLogs WebhookLog[]
-  messages    SentMessage[]
-  embeddings  MessageEmbedding[]
+  id            String             @id @default(uuid()) // sessionId correspondente no Zapo
+  tenantId      String
+  tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name          String
+  status        SessionStatus      @default(DISCONNECTED)
+  phone         String?
+  meJid         String?
+  pairingCode   String?
+  webhookUrl    String?
+  webhookEvents String[]           @default(["all"])
+  botEnabled    Boolean            @default(false)
+  botConfig     Json?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  webhookLogs   WebhookLog[]
+  messages      SentMessage[]
+  embeddings    MessageEmbedding[]
 }
 
 model WebhookLog {

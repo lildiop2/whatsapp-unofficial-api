@@ -4,7 +4,13 @@ export interface WhatsappSessionInfo {
   id: string;
   name: string;
   status: SessionStatus;
+  phone: string | null;
+  meJid: string | null;
+  pairingCode: string | null;
   webhookUrl: string | null;
+  webhookEvents: string[];
+  botEnabled: boolean;
+  botConfig: any;
   createdAt: Date;
   updatedAt: Date;
 }

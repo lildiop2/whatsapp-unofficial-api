@@ -16,11 +16,52 @@ function extractMessageText(payload: any): string | null {
   return null;
 }
 
+async function sendReply(sessionId: string, to: string, text: string) {
+  const apiPort = process.env.PORT || 3002;
+  const response = await fetch(`http://localhost:${apiPort}/messages/send`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      sessionId,
+      to,
+      text,
+      presenceDelay: 1500,
+      presenceType: 'composing',
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Falha ao enviar resposta. HTTP ${response.status}`);
+  }
+}
+
 const env = validateEnv(process.env);
 
 const logger = pino({
   level: env.LOG_LEVEL,
-  transport: env.NODE_ENV !== 'production' ? { target: 'pino-pretty' } : undefined,
+  base: null,
+  timestamp: false,
+  transport: env.NODE_ENV !== 'production' ? {
+    targets: [
+      {
+        target: 'pino-pretty',
+        options: { destination: 1 },
+        level: env.LOG_LEVEL,
+      },
+      {
+        target: 'pino-roll',
+        options: {
+          file: './logs/worker',
+          frequency: 'daily',
+          size: '10m',
+          mkdir: true,
+        },
+        level: env.LOG_LEVEL,
+      }
+    ]
+  } : undefined,
 });
 
 const queueName = 'zap-webhooks';
@@ -80,65 +121,91 @@ async function main() {
       `Processando webhook [${event}] para sessão ${sessionId}. Tentativa: ${attempts + 1}`,
     );
 
-    // Processamento de RAG e Auto-Reply em background (não bloqueante para o webhook)
+    // 1. Buscar a sessão correspondente no banco de dados para obter configurações de Webhook/Bot
+    let session;
+    try {
+      session = await prisma.whatsappSession.findUnique({
+        where: { id: sessionId },
+      });
+    } catch (err) {
+      logger.error(err, `Erro ao buscar sessão ${sessionId} do banco de dados`);
+    }
+
+    if (!session) {
+      logger.warn(`Sessão ${sessionId} não encontrada no banco. Descartando mensagem...`);
+      channel.ack(msg);
+      return;
+    }
+
+    // 2. Processamento de RAG e Auto-Reply em background se for um evento de mensagem recebida
     if (event === 'message' && payload) {
       const textContent = extractMessageText(payload);
       if (textContent) {
         const senderJid = payload.key?.fromMe ? 'me' : payload.key?.remoteJid || 'unknown';
         const messageId = payload.key?.id || crypto.randomUUID();
 
-        // 1. Indexar mensagem no pgvector
+        // 2.1 Salvar mensagem no pgvector
         ragService.saveMessageEmbedding(sessionId, messageId, senderJid, textContent).catch(err => {
           logger.error(err, 'Erro ao salvar embedding da mensagem no pgvector');
         });
 
-        // 2. Auto-reply com RAG se a mensagem for recebida e a IA estiver ativada
-        if (!payload.key?.fromMe && process.env.GEMINI_API_KEY) {
-          ragService
-            .runAgent(sessionId, textContent)
-            .then(async aiReply => {
-              logger.info(`Agente RAG gerou resposta: "${aiReply}"`);
-              const apiPort = process.env.PORT || 3002;
-              const sendResponse = await fetch(`http://localhost:${apiPort}/messages/send`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  sessionId,
-                  to: payload.key.remoteJid,
-                  text: aiReply,
-                  presenceDelay: 2000,
-                  presenceType: 'composing',
-                }),
-              });
+        // 2.2 Executar auto-reply se o Bot estiver ativado e a mensagem não for nossa
+        if (!payload.key?.fromMe && session.botEnabled) {
+          const botConfig = (session.botConfig as any) || {};
+          const botType = botConfig.type || 'simple';
 
-              if (!sendResponse.ok) {
-                logger.error(`Falha ao enviar auto-reply. Status: ${sendResponse.status}`);
-              }
-            })
-            .catch(err => {
-              logger.error(err, 'Erro ao processar auto-reply com Langgraph RAG');
-            });
+          if (botType === 'simple') {
+            const rules = botConfig.rules || [];
+            const normalizedText = textContent.toLowerCase().trim();
+            const matchedRule = rules.find((r: any) =>
+              normalizedText.includes(r.trigger.toLowerCase().trim()),
+            );
+
+            if (matchedRule) {
+              logger.info(
+                `Simple Bot ativado para trigger "${matchedRule.trigger}" na sessão ${sessionId}`,
+              );
+              sendReply(sessionId, payload.key.remoteJid, matchedRule.response).catch(err => {
+                logger.error(err, 'Erro ao enviar resposta do Simple Bot');
+              });
+            }
+          } else if (botType === 'ai') {
+            // RAG AI Agent
+            logger.info(`AI Bot ativado para a sessão ${sessionId}`);
+            ragService
+              .runAgent(sessionId, textContent, botConfig.prompt)
+              .then(async aiReply => {
+                logger.info(`Agente RAG gerou resposta: "${aiReply}"`);
+                await sendReply(sessionId, payload.key.remoteJid, aiReply);
+              })
+              .catch(err => {
+                logger.error(err, 'Erro ao processar auto-reply com AI Bot');
+              });
+          }
         }
       }
     }
 
-    try {
-      // 2. Buscar o webhookUrl atualizado da sessão no banco de dados
-      const session = await prisma.whatsappSession.findUnique({
-        where: { id: sessionId },
-      });
+    // 3. Filtrar e enviar o Webhook externo de acordo com as configurações da sessão
+    const webhookEvents = (session.webhookEvents as string[]) || ['all'];
+    const isEventAllowed = webhookEvents.includes('all') || webhookEvents.includes(event);
 
-      if (!session || !session.webhookUrl) {
+    if (!isEventAllowed || !session.webhookUrl) {
+      if (!isEventAllowed) {
+        logger.debug(
+          `Webhook [${event}] ignorado para a sessão ${sessionId} devido aos filtros de eventos configurados.`,
+        );
+      } else {
         logger.warn(
           `Webhook omitido: Sessão ${sessionId} não possui URL de webhook configurada. Descartando...`,
         );
-        channel.ack(msg);
-        return;
       }
+      channel.ack(msg);
+      return;
+    }
 
-      // 3. Efetuar envio do Webhook via POST
+    try {
+      // Efetuar envio do Webhook via POST
       let response;
       try {
         response = await fetch(session.webhookUrl, {
@@ -199,11 +266,9 @@ async function main() {
         logger.error(
           `Limite de retries excedido (5) para o webhook [${event}] da sessão ${sessionId}. Descartando...`,
         );
-        // ACK para remover da fila principal de vez e parar o loop
         channel.ack(msg);
       } else {
         logger.warn(`Encaminhando webhook para a fila de retry (DLX) para tentar novamente...`);
-        // NACK com requeue: false move a mensagem automaticamente para a DLX
         channel.nack(msg, false, false);
       }
     }
