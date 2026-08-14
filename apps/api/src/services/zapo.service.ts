@@ -10,6 +10,7 @@ import pRetry from 'p-retry';
 import { prisma } from './prisma.service.js';
 import { SessionStatus } from '@zap/shared';
 import { queueService } from './queue.service.js';
+import { storageService } from './storage.service.js';
 
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
@@ -298,6 +299,39 @@ class ZapoSessionManager {
     // Escutar por novas mensagens recebidas
     client.on('message', async event => {
       logger.debug(`Nova mensagem recebida na sessão ${sessionId} de ${event.key.remoteJid}`);
+
+      // Se a mensagem contiver mídia, baixa e salva no storage configurado (S3/MinIO ou local)
+      const getMessageMedia = (message: any) => {
+        if (!message) return null;
+        if (message.imageMessage) return { type: 'image', msg: message.imageMessage };
+        if (message.videoMessage) return { type: 'video', msg: message.videoMessage };
+        if (message.audioMessage) return { type: 'audio', msg: message.audioMessage };
+        if (message.documentMessage) return { type: 'document', msg: message.documentMessage };
+        if (message.stickerMessage) return { type: 'sticker', msg: message.stickerMessage };
+        return null;
+      };
+
+      const mediaNode = getMessageMedia(event.message);
+      if (mediaNode) {
+        try {
+          logger.info(`Mensagem com mídia do tipo [${mediaNode.type}] detectada. Baixando arquivo...`);
+          const bytes = await client.message.downloadBytes(event);
+          const buffer = Buffer.from(bytes);
+          const filename = mediaNode.msg.fileName || `media_${Date.now()}`;
+          const mimetype = mediaNode.msg.mimetype || 'application/octet-stream';
+          const publicUrl = await storageService.saveFile(buffer, filename, mimetype);
+
+          // Adiciona referência da URL no payload principal do webhook e na estrutura interna
+          (event as any).mediaUrl = publicUrl;
+          if (mediaNode.msg) {
+            mediaNode.msg.url = publicUrl;
+          }
+          logger.info(`Mídia salva com sucesso: ${publicUrl}`);
+        } catch (err: any) {
+          logger.error(err, `Falha ao baixar/salvar mídia da mensagem na sessão ${sessionId}`);
+        }
+      }
+
       queueService.publishWebhook(sessionId, 'message', event).catch(err => {
         logger.error(err, `Falha ao enfileirar mensagem recebida na sessão ${sessionId}`);
       });

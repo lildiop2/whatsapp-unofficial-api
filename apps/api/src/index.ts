@@ -73,6 +73,7 @@ app.use(
   }),
 );
 app.use(express.json());
+app.use('/public', express.static('public'));
 
 // Rotas da API
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
