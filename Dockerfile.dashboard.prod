@@ -18,6 +18,7 @@ COPY packages/shared ./packages/shared
 COPY apps/dashboard ./apps/dashboard
 
 # Executar build de produção do painel Vue 3
+RUN npm run build --workspace=@zap/shared
 RUN npm run build --workspace=apps/dashboard
 
 # Stage 2: Runner

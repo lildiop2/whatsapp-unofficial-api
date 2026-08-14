@@ -22,6 +22,7 @@ RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma gene
 
 # Build TypeScript
 WORKDIR /app
+RUN npm run build --workspace=@zap/shared
 RUN npm run build --workspace=apps/api
 
 # Prunar dependências de desenvolvimento

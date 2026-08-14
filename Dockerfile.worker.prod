@@ -15,6 +15,7 @@ COPY packages/shared ./packages/shared
 COPY apps/worker ./apps/worker
 
 # Build TypeScript
+RUN npm run build --workspace=@zap/shared
 RUN npm run build --workspace=apps/worker
 
 # Prunar dependências de desenvolvimento
