@@ -545,6 +545,431 @@ export const swaggerDocument = {
         },
       },
     },
+    '/sessions/{sessionId}/groups': {
+      post: {
+        summary: 'Criar novo grupo',
+        tags: ['Gestão de Grupos'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [{ name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['subject', 'participants'],
+                properties: {
+                  subject: { type: 'string', example: 'Equipe de Vendas' },
+                  participants: { type: 'array', items: { type: 'string' }, example: ['5511999999999'] },
+                  description: { type: 'string', example: 'Grupo de alinhamento diário' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '201': { description: 'Grupo criado com sucesso.' }
+        }
+      },
+      get: {
+        summary: 'Listar todos os grupos participando',
+        tags: ['Gestão de Grupos'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [{ name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: 'Lista de grupos retornada.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/groups/join': {
+      post: {
+        summary: 'Entrar em grupo via link de convite',
+        tags: ['Gestão de Grupos'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [{ name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['code'],
+                properties: {
+                  code: { type: 'string', example: 'https://chat.whatsapp.com/ExemploLinkConvite' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Entrou no grupo com sucesso.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/groups/{jid}': {
+      get: {
+        summary: 'Obter informações e participantes de um grupo',
+        tags: ['Gestão de Grupos'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' }, description: 'JID do grupo' }
+        ],
+        responses: {
+          '200': { description: 'Dados do grupo retornados.' }
+        }
+      },
+      patch: {
+        summary: 'Atualizar dados de um grupo (assunto/descrição)',
+        tags: ['Gestão de Grupos'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  subject: { type: 'string', example: 'Novo Nome do Grupo' },
+                  description: { type: 'string', example: 'Nova descrição' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Grupo atualizado com sucesso.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/groups/{jid}/participants': {
+      post: {
+        summary: 'Gerenciar participantes do grupo (Adicionar, Remover, Promover, Demitir)',
+        tags: ['Gestão de Grupos'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['participants', 'action'],
+                properties: {
+                  participants: { type: 'array', items: { type: 'string' }, example: ['5511999999999'] },
+                  action: { type: 'string', enum: ['add', 'remove', 'promote', 'demote'], example: 'add' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Ação executada com sucesso.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/groups/{jid}/leave': {
+      post: {
+        summary: 'Sair de um grupo',
+        tags: ['Gestão de Grupos'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+        ],
+        responses: {
+          '200': { description: 'Saída do grupo concluída.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/groups/{jid}/invite': {
+      get: {
+        summary: 'Obter link de convite do grupo',
+        tags: ['Gestão de Grupos'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+        ],
+        responses: {
+          '200': { description: 'Retorna o link de convite.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/groups/{jid}/invite/revoke': {
+      post: {
+        summary: 'Revogar/Rotacionar link de convite do grupo',
+        tags: ['Gestão de Grupos'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+        ],
+        responses: {
+          '200': { description: 'Link revogado e novo link gerado.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/newsletters': {
+      post: {
+        summary: 'Criar novo canal (Newsletter)',
+        tags: ['Gestão de Canais'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [{ name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['name'],
+                properties: {
+                  name: { type: 'string', example: 'Meu Canal de Ofertas' },
+                  description: { type: 'string', example: 'Promoções exclusivas todos os dias' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '201': { description: 'Canal criado com sucesso.' }
+        }
+      },
+      get: {
+        summary: 'Listar todos os canais inscritos/seguidos',
+        tags: ['Gestão de Canais'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [{ name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: 'Lista de canais retornada.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/newsletters/{jid}': {
+      get: {
+        summary: 'Obter informações de um canal',
+        tags: ['Gestão de Canais'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+        ],
+        responses: {
+          '200': { description: 'Informações do canal retornadas.' }
+        }
+      },
+      delete: {
+        summary: 'Excluir um canal permanentemente',
+        tags: ['Gestão de Canais'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+        ],
+        responses: {
+          '200': { description: 'Canal deletado.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/newsletters/{jid}/follow': {
+      post: {
+        summary: 'Seguir/Inscrever-se em um canal',
+        tags: ['Gestão de Canais'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+        ],
+        responses: {
+          '200': { description: 'Inscrição realizada.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/newsletters/{jid}/unfollow': {
+      post: {
+        summary: 'Deixar de seguir um canal',
+        tags: ['Gestão de Canais'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+        ],
+        responses: {
+          '200': { description: 'Inscrição removida.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/newsletters/{jid}/mute': {
+      post: {
+        summary: 'Silenciar ou reativar notificações do canal',
+        tags: ['Gestão de Canais'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['mute'],
+                properties: {
+                  mute: { type: 'boolean', example: true }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Status de silêncio atualizado.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/communities': {
+      post: {
+        summary: 'Criar uma nova Comunidade (Grupo Pai)',
+        tags: ['Gestão de Comunidades'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [{ name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['subject'],
+                properties: {
+                  subject: { type: 'string', example: 'Comunidade Principal' },
+                  description: { type: 'string', example: 'Comunidade Geral' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '201': { description: 'Comunidade criada com sucesso.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/communities/{jid}/link': {
+      post: {
+        summary: 'Vincular subgrupos à Comunidade',
+        tags: ['Gestão de Comunidades'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' }, description: 'JID da comunidade' }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['subgroupJids'],
+                properties: {
+                  subgroupJids: { type: 'array', items: { type: 'string' }, example: ['12036321123456@g.us'] }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Grupos vinculados.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/communities/{jid}/unlink': {
+      post: {
+        summary: 'Desvincular subgrupos da Comunidade',
+        tags: ['Gestão de Comunidades'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['subgroupJids'],
+                properties: {
+                  subgroupJids: { type: 'array', items: { type: 'string' }, example: ['12036321123456@g.us'] },
+                  removeOrphanedMembers: { type: 'boolean', example: true }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Grupos desvinculados.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/communities/{jid}': {
+      delete: {
+        summary: 'Desativar/Excluir Comunidade permanentemente',
+        tags: ['Gestão de Comunidades'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+        ],
+        responses: {
+          '200': { description: 'Comunidade desativada.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/contacts/check': {
+      post: {
+        summary: 'Verificar contatos ativos no WhatsApp (Check Numbers)',
+        tags: ['Gestão de Contatos'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [{ name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['numbers'],
+                properties: {
+                  numbers: { type: 'array', items: { type: 'string' }, example: ['5511999999999'] }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Resultado da validação de números com JID LID retornada.' }
+        }
+      }
+    },
+    '/sessions/{sessionId}/contacts/{jid}/profile': {
+      get: {
+        summary: 'Obter foto de perfil e status (About) de um contato',
+        tags: ['Gestão de Contatos'],
+        security: [{ BearerAuth: [] }, { ApiKeyAuth: [] }],
+        parameters: [
+          { name: 'sessionId', in: 'path', required: true, schema: { type: 'string' } },
+          { name: 'jid', in: 'path', required: true, schema: { type: 'string' } }
+        ],
+        responses: {
+          '200': { description: 'Dados de perfil retornados.' }
+        }
+      }
+    },
   },
   components: {
     securitySchemes: {
